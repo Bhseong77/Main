@@ -6,7 +6,35 @@
 <title>ENJET 메인 대시보드</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
-<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<script>
+// MSAL 라이브러리 다중 CDN 폴백 로드
+(function loadMSAL() {
+  const cdns = [
+    "https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/msal/2.38.3/msal-browser.min.js",
+    "https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"
+  ];
+  let i = 0;
+  function tryNext() {
+    if (i >= cdns.length) {
+      document.addEventListener("DOMContentLoaded", () => {
+        const el = document.getElementById("errorMsg");
+        if (el) {
+          el.textContent = "MSAL 라이브러리 로드 실패. 네트워크 또는 CDN 차단 확인 필요.";
+          el.style.display = "block";
+        }
+      });
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = cdns[i++];
+    s.onload = () => { console.log("MSAL 로드 성공:", s.src); if (window.__initMSALWhenReady) window.__initMSALWhenReady(); };
+    s.onerror = tryNext;
+    document.head.appendChild(s);
+  }
+  tryNext();
+})();
+</script>
 <style>
 :root {
   --bg:#f4f6fa;
@@ -667,8 +695,19 @@ function formatRelTime(iso) {
   } catch (e) { return ""; }
 }
 
-// 시작
-initMSAL();
+// 시작 - MSAL 라이브러리가 로드되면 자동으로 호출됨
+window.__initMSALWhenReady = function() {
+  if (typeof msal === "undefined") {
+    showError("MSAL 라이브러리를 사용할 수 없습니다");
+    return;
+  }
+  initMSAL();
+};
+
+// 만약 라이브러리가 이미 로드되어 있으면 바로 시작
+if (typeof msal !== "undefined") {
+  initMSAL();
+}
 
 // 1분마다 환영 메시지 갱신
 setInterval(updateGreeting, 60000);
