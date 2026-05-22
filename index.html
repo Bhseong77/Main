@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ENJET | 통합 대시보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.10.0/lib/msal-browser.min.js"></script>
+<style>
+/* ━━ 영업/구매 대시보드와 동일한 컬러 톤 ━━ */
+:root{
+  --bg:#f4f6fa;--bg2:#fff;--bg3:#eef1f6;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);
+  --p:#1a6fd4;--pd:rgba(26,111,212,0.08);
+  --g:#00875a;--gd:rgba(0,135,90,0.08);
+  --a:#d95f00;--ad:rgba(217,95,0,0.08);
+  --r:#c8201e;--rd:rgba(200,32,30,0.08);
+  --y:#9a6400;--yd:rgba(154,100,0,0.09);
+  --pu:#6b35b8;--pud:rgba(107,53,184,0.08);
+  --t:#111827;--t2:#4b5563;--t3:#9ca3af;
+  --m:"JetBrains Mono",monospace;
+  --s:"Pretendard",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--s);background:var(--bg);color:var(--t);font-size:16px;min-height:100vh}
+
+/* ━━ 로그인 모달 (영업 대시보드와 동일) ━━ */
+.lm{position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.lm.hidden{display:none}
+.lbox{background:#fff;border-radius:16px;padding:38px;width:420px;max-width:90vw;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.l-logo{font-size:28px;font-weight:900;color:var(--p);letter-spacing:3px;font-family:var(--m);margin-bottom:4px}
+.l-sub{color:var(--t3);font-size:15px;margin-bottom:20px}
+.l-desc{color:var(--t2);font-size:16px;line-height:1.6;margin-bottom:20px}
+.btn-ms{background:#2f2f2f;color:#fff;border:none;width:100%;padding:12px;font-size:17px;font-weight:600;font-family:var(--s);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px}
+.btn-ms:hover{background:#111}.btn-ms:disabled{background:#999}
+.mslogo{width:20px;height:20px;background-image:linear-gradient(to right,#f25022 50%,#7fba00 50%),linear-gradient(to right,#00a4ef 50%,#ffb900 50%);background-size:100% 50%;background-repeat:no-repeat;background-position:top,bottom}
+.l-foot{margin-top:14px;font-size:14px;color:var(--t3);line-height:1.6}
+
+/* ━━ 상단 바 ━━ */
+.topbar{
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:14px 28px;display:flex;align-items:center;gap:14px;
+  position:sticky;top:0;z-index:100;
+}
+.tb-logo{display:flex;align-items:center;gap:12px}
+.tb-mark{font-size:22px;font-weight:900;color:var(--p);letter-spacing:3px;font-family:var(--m)}
+.tb-sub{font-size:14px;color:var(--t2);font-weight:600}
+.tb-sp{flex:1}
+.aus{padding:6px 12px;border-radius:7px;background:var(--bg3);font-size:14px;color:var(--t2);font-weight:600}
+.aus.ok{background:var(--gd);color:var(--g)}
+.tb-btn{padding:7px 13px;border:1px solid var(--border2);background:var(--bg2);color:var(--t);border-radius:7px;cursor:pointer;font-family:var(--s);font-size:14px;font-weight:600;transition:all .15s}
+.tb-btn:hover{background:var(--bg3)}
+.tb-btn.primary{background:var(--p);color:#fff;border-color:var(--p)}
+.tb-btn.primary:hover{background:#0e5cb8}
+.tb-btn.master{background:var(--pud);color:var(--pu);border-color:rgba(107,53,184,0.2)}
+.tb-btn.master:hover{background:rgba(107,53,184,0.15)}
+
+/* ━━ 메인 영역 ━━ */
+.layout{display:none;flex-direction:column;min-height:100vh}
+.content{padding:24px 28px;max-width:1400px;margin:0 auto;width:100%}
+
+/* ━━ 환영 헤더 ━━ */
+.welcome{margin-bottom:20px}
+.welcome-title{font-size:24px;font-weight:800;color:var(--t);margin-bottom:4px}
+.welcome-sub{font-size:15px;color:var(--t2)}
+
+/* ━━ CEO 대시보드 (placeholder) ━━ */
+.ceo-section{
+  background:linear-gradient(135deg,var(--p) 0%,#0e5cb8 100%);
+  border-radius:14px;padding:24px 28px;color:#fff;
+  margin-bottom:22px;box-shadow:0 4px 20px rgba(26,111,212,0.2);
+  position:relative;overflow:hidden;
+}
+.ceo-section::before{
+  content:"";position:absolute;top:-50px;right:-50px;
+  width:200px;height:200px;border-radius:50%;
+  background:rgba(255,255,255,0.06);
+}
+.ceo-section::after{
+  content:"";position:absolute;bottom:-80px;right:80px;
+  width:160px;height:160px;border-radius:50%;
+  background:rgba(255,255,255,0.04);
+}
+.ceo-label{font-size:13px;font-weight:700;letter-spacing:2px;opacity:0.85;margin-bottom:4px;text-transform:uppercase}
+.ceo-title{font-size:22px;font-weight:800;margin-bottom:10px}
+.ceo-desc{font-size:15px;line-height:1.6;opacity:0.92;max-width:600px;position:relative;z-index:1}
+.ceo-kpis{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+  margin-top:18px;position:relative;z-index:1;
+}
+.ceo-kpi{
+  background:rgba(255,255,255,0.12);backdrop-filter:blur(8px);
+  border-radius:10px;padding:14px 16px;
+  border:1px solid rgba(255,255,255,0.18);
+}
+.ceo-kpi-label{font-size:12px;opacity:0.85;margin-bottom:6px;font-weight:600}
+.ceo-kpi-value{font-size:20px;font-weight:800;font-family:var(--m)}
+.ceo-kpi-placeholder{font-size:13px;opacity:0.7;font-style:italic}
+
+/* ━━ 섹션 헤더 ━━ */
+.section-head{
+  display:flex;align-items:center;gap:10px;
+  margin:24px 0 14px 0;
+}
+.section-title{font-size:17px;font-weight:800;color:var(--t)}
+.section-desc{font-size:14px;color:var(--t2)}
+
+/* ━━ 모듈 카드 그리드 ━━ */
+.modules-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;
+}
+.mod-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:14px;
+  padding:24px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;min-height:200px;
+}
+.mod-card:hover{
+  border-color:var(--p);transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(26,111,212,0.12);
+}
+.mod-card.disabled{cursor:not-allowed;opacity:0.6}
+.mod-card.disabled:hover{
+  border-color:var(--border);transform:none;box-shadow:none;
+}
+.mod-card.no-access{cursor:not-allowed;opacity:0.4;filter:grayscale(0.5)}
+.mod-card.no-access:hover{
+  border-color:var(--border);transform:none;box-shadow:none;
+}
+.mod-icon{
+  width:54px;height:54px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;margin-bottom:14px;
+}
+.mod-icon.purchase{background:var(--ad);color:var(--a)}
+.mod-icon.sales{background:var(--pd);color:var(--p)}
+.mod-icon.hr{background:var(--gd);color:var(--g)}
+.mod-icon.finance{background:var(--pud);color:var(--pu)}
+.mod-name{font-size:18px;font-weight:800;color:var(--t);margin-bottom:6px}
+.mod-desc{font-size:14px;color:var(--t2);line-height:1.5;margin-bottom:14px;flex:1}
+.mod-status{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 11px;border-radius:99px;font-size:12px;font-weight:700;
+  align-self:flex-start;
+}
+.mod-status.active{background:var(--gd);color:var(--g)}
+.mod-status.coming{background:var(--yd);color:var(--y)}
+.mod-status.locked{background:var(--rd);color:var(--r)}
+.mod-arrow{
+  position:absolute;top:24px;right:24px;
+  width:32px;height:32px;border-radius:50%;
+  background:var(--bg3);display:flex;align-items:center;justify-content:center;
+  color:var(--t3);transition:all .15s;
+}
+.mod-card:not(.disabled):not(.no-access):hover .mod-arrow{
+  background:var(--p);color:#fff;
+}
+
+/* ━━ 푸터 ━━ */
+.foot{
+  margin-top:auto;padding:18px 28px;text-align:center;
+  color:var(--t3);font-size:13px;border-top:1px solid var(--border);
+}
+
+/* ━━ 모달 (권한 마스터 설정) ━━ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:10000;
+  display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);
+}
+.modal-overlay.show{display:flex}
+.modal{
+  background:var(--bg2);border-radius:14px;width:720px;max-width:92vw;
+  max-height:88vh;display:flex;flex-direction:column;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
+}
+.modal-head{
+  padding:18px 22px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-title{font-size:18px;font-weight:800;color:var(--t)}
+.modal-close{
+  background:none;border:none;font-size:22px;color:var(--t3);
+  cursor:pointer;width:32px;height:32px;border-radius:7px;
+}
+.modal-close:hover{background:var(--bg3);color:var(--t)}
+.modal-body{padding:20px 22px;overflow-y:auto;flex:1}
+.modal-foot{
+  padding:14px 22px;border-top:1px solid var(--border);background:var(--bg3);
+  display:flex;gap:8px;justify-content:flex-end;
+}
+
+/* 권한 설정 폼 */
+.perm-info{
+  background:var(--pd);border:1px solid rgba(26,111,212,0.15);
+  border-radius:8px;padding:12px 14px;margin-bottom:16px;
+  font-size:14px;color:var(--p);line-height:1.5;
+}
+.perm-row{
+  display:flex;align-items:center;gap:10px;padding:10px;
+  background:var(--bg3);border-radius:8px;margin-bottom:8px;
+}
+.perm-email{
+  flex:1;padding:8px 11px;border:1px solid var(--border2);border-radius:7px;
+  font-family:var(--s);font-size:14px;background:var(--bg2);
+}
+.perm-modules{display:flex;gap:8px;flex-wrap:wrap}
+.perm-chk{
+  display:flex;align-items:center;gap:5px;padding:5px 10px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+  cursor:pointer;font-size:13px;font-weight:600;color:var(--t2);
+  user-select:none;
+}
+.perm-chk input{margin:0;cursor:pointer}
+.perm-chk:has(input:checked){
+  background:var(--pd);border-color:rgba(26,111,212,0.25);color:var(--p);
+}
+.btn-del{
+  background:none;border:none;color:var(--r);cursor:pointer;
+  font-size:18px;padding:4px 8px;border-radius:5px;
+}
+.btn-del:hover{background:var(--rd)}
+.btn-add{
+  width:100%;padding:10px;border:1px dashed var(--border2);
+  background:var(--bg2);color:var(--t2);border-radius:8px;cursor:pointer;
+  font-family:var(--s);font-size:14px;font-weight:600;margin-top:6px;
+}
+.btn-add:hover{border-color:var(--p);color:var(--p);background:var(--pd)}
+.modal-btn{
+  padding:8px 16px;border-radius:7px;border:1px solid var(--border2);
+  background:var(--bg2);color:var(--t);cursor:pointer;
+  font-family:var(--s);font-size:14px;font-weight:600;
+}
+.modal-btn:hover{background:var(--bg3)}
+.modal-btn.primary{background:var(--p);color:#fff;border-color:var(--p)}
+.modal-btn.primary:hover{background:#0e5cb8}
+
+@media (max-width:760px){
+  .ceo-kpis{grid-template-columns:repeat(2,1fr)}
+  .topbar{padding:10px 16px;gap:8px;flex-wrap:wrap}
+  .content{padding:16px}
+  .tb-sub{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ━━ 로그인 화면 ━━ -->
+<div class="lm" id="lm">
+  <div class="lbox">
+    <div class="l-logo">ENJET</div>
+    <div class="l-sub">통합 대시보드 v1.0</div>
+    <div class="l-desc">
+      ENJET 임직원 전용<br>
+      Microsoft 365 계정으로 로그인해주세요
+    </div>
+    <button class="btn-ms" id="btnLogin">
+      <div class="mslogo"></div>Microsoft 계정으로 로그인
+    </button>
+    <div class="l-foot">
+      🔒 ENJET 조직 계정만 접근 가능<br>
+      권한에 따라 모듈 접근이 제한됩니다
+    </div>
+  </div>
+</div>
+
+<!-- ━━ 메인 레이아웃 ━━ -->
+<div class="layout" id="ml">
+
+  <!-- 상단 바 -->
+  <div class="topbar">
+    <div class="tb-logo">
+      <div class="tb-mark">ENJET</div>
+      <div class="tb-sub">통합 대시보드</div>
+    </div>
+    <div class="tb-sp"></div>
+    <span class="aus" id="aus">● 로그인 확인 중...</span>
+    <button class="tb-btn master" id="btnMaster" onclick="openMasterModal()" style="display:none">⚙ 권한 마스터</button>
+    <button class="tb-btn" onclick="logout()">로그아웃</button>
+  </div>
+
+  <!-- 메인 콘텐츠 -->
+  <div class="content">
+
+    <!-- 환영 메시지 -->
+    <div class="welcome">
+      <div class="welcome-title" id="welcomeTitle">안녕하세요 👋</div>
+      <div class="welcome-sub" id="welcomeSub">오늘도 좋은 하루 보내세요.</div>
+    </div>
+
+    <!-- CEO 대시보드 (Placeholder) -->
+    <div class="ceo-section">
+      <div class="ceo-label">CEO Dashboard</div>
+      <div class="ceo-title">경영 현황 한눈에 보기</div>
+      <div class="ceo-desc">
+        영업/구매/생산/재무 데이터를 통합하여 핵심 지표를 실시간으로 표시합니다.
+        <br>현재 준비 중이며, 모듈별 데이터가 안정화되는 대로 순차적으로 연동될 예정입니다.
+      </div>
+      <div class="ceo-kpis">
+        <div class="ceo-kpi">
+          <div class="ceo-kpi-label">📊 월 매출</div>
+          <div class="ceo-kpi-value ceo-kpi-placeholder">준비중</div>
+        </div>
+        <div class="ceo-kpi">
+          <div class="ceo-kpi-label">🛒 월 매입</div>
+          <div class="ceo-kpi-value ceo-kpi-placeholder">준비중</div>
+        </div>
+        <div class="ceo-kpi">
+          <div class="ceo-kpi-label">📈 진행 프로젝트</div>
+          <div class="ceo-kpi-value ceo-kpi-placeholder">준비중</div>
+        </div>
+        <div class="ceo-kpi">
+          <div class="ceo-kpi-label">⚡ 이번주 일정</div>
+          <div class="ceo-kpi-value ceo-kpi-placeholder">준비중</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 모듈 섹션 -->
+    <div class="section-head">
+      <div class="section-title">📌 업무 모듈</div>
+      <div class="section-desc">접근 권한이 있는 모듈만 표시됩니다</div>
+    </div>
+
+    <div class="modules-grid" id="modulesGrid">
+      <!-- JS로 권한에 따라 렌더링 -->
+    </div>
+
+  </div>
+
+  <div class="foot">
+    © 2026 ENJET. Internal Use Only.
+  </div>
+</div>
+
+<!-- ━━ 권한 마스터 설정 모달 ━━ -->
+<div class="modal-overlay" id="masterModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">⚙ 권한 마스터 설정</div>
+      <button class="modal-close" onclick="closeMasterModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="perm-info">
+        💡 사용자별로 접근 가능한 모듈을 설정합니다. 이메일은 ENJET 계정(@enjet.co.kr)을 입력하세요.<br>
+        설정은 브라우저(localStorage)에 저장됩니다. <strong>관리자(ADMIN)</strong>는 모든 모듈 + 권한 설정 가능.
+      </div>
+      <div id="permList"></div>
+      <button class="btn-add" onclick="addPermRow()">＋ 사용자 추가</button>
+    </div>
+    <div class="modal-foot">
+      <button class="modal-btn" onclick="closeMasterModal()">취소</button>
+      <button class="modal-btn primary" onclick="savePermissions()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ━━ 설정 (영업/구매 대시보드와 동일) ━━
+const MSAL_CLIENT_ID = "76793776-3330-496f-97f1-9f0c034f3f07";
+const MSAL_TENANT_ID = "58b310e1-9278-47ab-8e49-792728818c9e";
+const SCOPES = ["User.Read"];
+
+// ━━ 모듈 정의 ━━
+const MODULES = [
+  {
+    id: "purchase",
+    name: "구매 모듈",
+    icon: "🛒",
+    desc: "구매요청, 발주, 거래처, BOM, 매입 통합 관리",
+    url: "https://bhseong77.github.io/enjet-purchase-dashboard/",
+    status: "active",
+  },
+  {
+    id: "sales",
+    name: "영업 모듈",
+    icon: "💼",
+    desc: "영업활동, 견적, 수주, 매출 파이프라인 관리",
+    url: "https://bhseong77.github.io/enjet-sales-dashboard/",
+    status: "active",
+  },
+  {
+    id: "hr",
+    name: "인사총무 모듈",
+    icon: "👥",
+    desc: "조직, 인사기록, 근태, 총무 업무 (준비중)",
+    url: "#",
+    status: "coming",
+  },
+  {
+    id: "finance",
+    name: "재무회계 모듈",
+    icon: "💰",
+    desc: "회계전표, 세금계산서, 자금, 결산 (준비중)",
+    url: "#",
+    status: "coming",
+  },
+];
+
+// ━━ 기본 권한 매핑 (localStorage 비어있을 때) ━━
+// 형식: { "email@enjet.co.kr": { admin:true|false, modules:["purchase","sales","hr","finance"] } }
+const DEFAULT_PERMS = {
+  "baekhoon@enjet.co.kr": { admin: true, modules: ["purchase", "sales", "hr", "finance"] },
+};
+
+const PERM_STORAGE_KEY = "enjet_main_permissions";
+
+let msal_, acct;
+let currentPerms = {};
+
+// ━━ MSAL 초기화 ━━
+async function initApp() {
+  msal_ = new msal.PublicClientApplication({
+    auth: {
+      clientId: MSAL_CLIENT_ID,
+      authority: "https://login.microsoftonline.com/" + MSAL_TENANT_ID,
+      redirectUri: location.href.split("?")[0].split("#")[0],
+    },
+    cache: { cacheLocation: "sessionStorage" },
+  });
+  await msal_.initialize();
+  const accts = msal_.getAllAccounts();
+  if (accts.length > 0) { acct = accts[0]; onOK(); }
+}
+
+async function login() {
+  const b = document.getElementById("btnLogin");
+  b.disabled = true; b.textContent = "로그인 중...";
+  try {
+    const r = await msal_.loginPopup({ scopes: SCOPES, prompt: "select_account" });
+    acct = r.account; onOK();
+  } catch (e) {
+    b.disabled = false;
+    b.innerHTML = '<div class="mslogo"></div>Microsoft 계정으로 로그인';
+    alert("로그인 실패: " + e.message);
+  }
+}
+
+function logout() {
+  if (!confirm("로그아웃하시겠습니까?")) return;
+  msal_.logoutPopup({ account: acct });
+  acct = null;
+  document.getElementById("lm").classList.remove("hidden");
+  document.getElementById("ml").style.display = "none";
+}
+
+function onOK() {
+  document.getElementById("lm").classList.add("hidden");
+  document.getElementById("ml").style.display = "flex";
+
+  const userEmail = (acct.username || "").toLowerCase();
+  const userName = acct.name || userEmail;
+
+  // 환영 메시지
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? "좋은 아침입니다" : hour < 18 ? "안녕하세요" : "좋은 저녁입니다";
+  document.getElementById("welcomeTitle").textContent = `${greet}, ${userName.split(" ")[0]} 님 👋`;
+  document.getElementById("welcomeSub").textContent = `${new Date().toLocaleDateString("ko-KR", { year:"numeric", month:"long", day:"numeric", weekday:"long" })}`;
+
+  // 상단 사용자 표시
+  document.getElementById("aus").className = "aus ok";
+  document.getElementById("aus").textContent = "● " + userName;
+
+  // 권한 로드
+  loadPermissions();
+  const myPerm = getMyPermission(userEmail);
+
+  // 관리자만 권한 마스터 버튼 표시
+  if (myPerm.admin) {
+    document.getElementById("btnMaster").style.display = "inline-block";
+  }
+
+  // 모듈 카드 렌더
+  renderModules(myPerm);
+}
+
+// ━━ 권한 관리 ━━
+function loadPermissions() {
+  try {
+    const raw = localStorage.getItem(PERM_STORAGE_KEY);
+    if (raw) {
+      currentPerms = JSON.parse(raw);
+    } else {
+      currentPerms = JSON.parse(JSON.stringify(DEFAULT_PERMS));
+      localStorage.setItem(PERM_STORAGE_KEY, JSON.stringify(currentPerms));
+    }
+  } catch (e) {
+    console.warn("권한 로드 실패, 기본값 사용:", e);
+    currentPerms = JSON.parse(JSON.stringify(DEFAULT_PERMS));
+  }
+}
+
+function getMyPermission(email) {
+  const e = (email || "").toLowerCase();
+  if (currentPerms[e]) return currentPerms[e];
+  // 등록되지 않은 사용자는 기본적으로 접근 불가
+  return { admin: false, modules: [] };
+}
+
+function renderModules(myPerm) {
+  const grid = document.getElementById("modulesGrid");
+  grid.innerHTML = "";
+
+  MODULES.forEach(mod => {
+    const card = document.createElement("div");
+    card.className = "mod-card";
+
+    let statusBadge = "";
+    let canClick = false;
+    let noAccess = false;
+
+    if (mod.status === "coming") {
+      // 준비중 모듈
+      card.classList.add("disabled");
+      statusBadge = '<span class="mod-status coming">🔧 준비중</span>';
+    } else if (myPerm.admin || myPerm.modules.includes(mod.id)) {
+      // 활성 + 권한 있음
+      statusBadge = '<span class="mod-status active">✓ 사용 가능</span>';
+      canClick = true;
+    } else {
+      // 활성 + 권한 없음
+      card.classList.add("no-access");
+      statusBadge = '<span class="mod-status locked">🔒 권한 없음</span>';
+      noAccess = true;
+    }
+
+    card.innerHTML = `
+      <div class="mod-arrow">→</div>
+      <div class="mod-icon ${mod.id}">${mod.icon}</div>
+      <div class="mod-name">${mod.name}</div>
+      <div class="mod-desc">${mod.desc}</div>
+      ${statusBadge}
+    `;
+
+    if (canClick) {
+      card.onclick = () => { location.href = mod.url; };
+    } else if (mod.status === "coming") {
+      card.onclick = () => alert(`${mod.name}은 현재 개발 준비중입니다.`);
+    } else if (noAccess) {
+      card.onclick = () => alert(`${mod.name}에 대한 접근 권한이 없습니다.\n관리자에게 문의하세요.`);
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+// ━━ 권한 마스터 설정 모달 ━━
+function openMasterModal() {
+  renderPermList();
+  document.getElementById("masterModal").classList.add("show");
+}
+
+function closeMasterModal() {
+  document.getElementById("masterModal").classList.remove("show");
+}
+
+function renderPermList() {
+  const list = document.getElementById("permList");
+  list.innerHTML = "";
+
+  Object.entries(currentPerms).forEach(([email, perm], idx) => {
+    addPermRow(email, perm);
+  });
+
+  if (Object.keys(currentPerms).length === 0) {
+    addPermRow();
+  }
+}
+
+function addPermRow(email = "", perm = null) {
+  const list = document.getElementById("permList");
+  const isAdmin = perm?.admin === true;
+  const mods = perm?.modules || [];
+
+  const row = document.createElement("div");
+  row.className = "perm-row";
+  row.innerHTML = `
+    <input type="email" class="perm-email" placeholder="user@enjet.co.kr" value="${email}">
+    <div class="perm-modules">
+      <label class="perm-chk"><input type="checkbox" class="perm-admin" ${isAdmin ? "checked" : ""}>관리자</label>
+      <label class="perm-chk"><input type="checkbox" class="perm-mod" value="purchase" ${mods.includes("purchase") ? "checked" : ""}>구매</label>
+      <label class="perm-chk"><input type="checkbox" class="perm-mod" value="sales" ${mods.includes("sales") ? "checked" : ""}>영업</label>
+      <label class="perm-chk"><input type="checkbox" class="perm-mod" value="hr" ${mods.includes("hr") ? "checked" : ""}>인사총무</label>
+      <label class="perm-chk"><input type="checkbox" class="perm-mod" value="finance" ${mods.includes("finance") ? "checked" : ""}>재무회계</label>
+    </div>
+    <button class="btn-del" onclick="this.parentElement.remove()" title="삭제">🗑</button>
+  `;
+  list.appendChild(row);
+}
+
+function savePermissions() {
+  const rows = document.querySelectorAll("#permList .perm-row");
+  const newPerms = {};
+
+  rows.forEach(row => {
+    const email = row.querySelector(".perm-email").value.trim().toLowerCase();
+    if (!email) return;
+    const admin = row.querySelector(".perm-admin").checked;
+    const modules = Array.from(row.querySelectorAll(".perm-mod:checked")).map(c => c.value);
+    newPerms[email] = { admin, modules };
+  });
+
+  currentPerms = newPerms;
+  localStorage.setItem(PERM_STORAGE_KEY, JSON.stringify(currentPerms));
+  alert("권한 설정이 저장되었습니다.\n변경사항은 사용자가 새로고침하거나 다시 로그인하면 적용됩니다.");
+  closeMasterModal();
+
+  // 본인 권한이 바뀌었을 수 있으므로 모듈 재렌더
+  const myPerm = getMyPermission(acct.username);
+  renderModules(myPerm);
+  if (!myPerm.admin) {
+    document.getElementById("btnMaster").style.display = "none";
+  }
+}
+
+// ━━ 시작 ━━
+document.getElementById("btnLogin").addEventListener("click", login);
+initApp();
+</script>
+
+</body>
+</html>
