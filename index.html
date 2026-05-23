@@ -3,6 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+
+<!-- 📱 PWA / Mobile -->
+<meta name="theme-color" content="#1a6fd4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ENJET">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"%3E%3Crect width="192" height="192" rx="36" fill="%231a6fd4"/%3E%3Ctext x="96" y="130" text-anchor="middle" fill="%23fff" font-size="100" font-weight="900" font-family="sans-serif"%3EENJET%3C/text%3E%3C/svg%3E'>
+
 <title>ENJET 메인 대시보드</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
@@ -80,6 +89,10 @@ body { padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); min-heigh
 .module-card.has-alert { box-shadow:0 0 0 2px var(--r); }
 .module-card.admin-card { background:linear-gradient(135deg,#7c3aed 0%,#6d28d9 100%); color:#fff; }
 .module-card.admin-card:hover { box-shadow:0 12px 24px rgba(124,58,237,0.4); transform:translateY(-3px); }
+.module-card.featured-card { background:linear-gradient(135deg,#fff 0%,#e7f0fb 50%,#fff 100%); border:2px solid #1a6fd4; box-shadow:0 4px 12px rgba(26,111,212,0.15); }
+.module-card.featured-card:hover { box-shadow:0 12px 24px rgba(26,111,212,0.25); transform:translateY(-3px); }
+.module-card.featured-card .mc-icon { background:linear-gradient(135deg,#1a6fd4,#0f4c81); color:#fff; }
+.module-card.featured-card::before { content:'⭐'; position:absolute; top:8px; right:8px; font-size:14px; opacity:0.6; }
 .mc-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
 .mc-icon { font-size:32px; line-height:1; }
 .admin-card .mc-icon { filter:drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
@@ -93,6 +106,8 @@ body { padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); min-heigh
 .mc-badge.lock { background:#e5e7eb; color:var(--t3); }
 .mc-badge.alert { background:var(--rd); color:var(--r); animation:pulse 2s infinite; }
 .mc-badge.admin { background:rgba(255,255,255,0.25); color:#fff; border:1px solid rgba(255,255,255,0.4); }
+.mc-badge.beta { background:#fef3c7; color:#92400e; }
+.mc-badge.backup { background:#e0e7ff; color:#3730a3; }
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
 .mc-body { padding-top:6px; }
 .mc-stats { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
@@ -206,7 +221,7 @@ body { padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); min-heigh
           <button class="btn-logout" onclick="signOut()">로그아웃</button>
         </div>
       </div>
-      <div class="hdr-title">통합 대시보드</div>
+      <div class="hdr-title">통합 대시보드 <span style="font-size:12px;background:rgba(255,255,255,0.25);padding:3px 8px;border-radius:99px;font-weight:700;vertical-align:middle;margin-left:6px">🧪 BETA</span></div>
       <div class="hdr-sub" id="userInfo">로그인 중...</div>
     </div>
   </div>
@@ -241,6 +256,17 @@ body { padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); min-heigh
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- 🔄 전체 워크플로우 상태 (ES 통합) -->
+    <div class="section-title" style="display:flex;align-items:center;gap:8px">
+      🔄 전체 워크플로우 상태
+      <span style="font-size:11px;background:linear-gradient(135deg,#1a6fd4,#0f4c81);color:#fff;padding:2px 8px;border-radius:99px;font-weight:700">실시간</span>
+    </div>
+    <div id="workflowStatus" style="background:linear-gradient(135deg,#fff 0%,#e7f0fb 100%);border-radius:14px;padding:18px;margin-bottom:20px;border:1px solid var(--border);box-shadow:var(--shadow)">
+      <div id="workflowGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px">
+        <div class="loading-card" style="grid-column:1/-1;text-align:center;padding:20px;color:var(--t3)">통합 워크플로우 상태 로딩 중...</div>
       </div>
     </div>
 
@@ -342,12 +368,13 @@ const STANDARD_DEPTS = ["대표이사", "경영전략본부", "ES사업부", "�
 const STANDARD_RANKS = ["대표", "부사장", "전무", "상무", "이사", "부장", "차장", "과장", "대리", "사원", "반장", "인턴"];
 
 const MODULES = [
-  { id: "sales", icon: "💼", name: "영업관리", desc: "견적 · 수주 · 매출", url: "https://bhseong77.github.io/enjet-sales-dashboard/", status: "active" },
-  { id: "purchase", icon: "🛒", name: "구매관리", desc: "PR · PO · 입고", url: "https://bhseong77.github.io/enjet-purchase-dashboard/", status: "active" },
-  { id: "approval", icon: "📋", name: "전자결재", desc: "휴가 · 지출 · 출장 · 결재", url: "https://bhseong77.github.io/enjet-approval/", status: "active", hasStats: true },
-  { id: "mail", icon: "📧", name: "메일관리", desc: "팀원 메일 · 캘린더", url: "https://bhseong77.github.io/mail/", status: "active" },
-  { id: "hr", icon: "👥", name: "인사·급여 ERP", desc: "인사 · 급여 · 근태 · 연말정산", url: "https://bhseong77.github.io/hr-dashboard/", status: "active" },
-  { id: "finance", icon: "💰", name: "재무회계", desc: "매출 · 비용 · 손익", url: null, status: "soon" }
+  { id: "sales", icon: "💼", name: "영업관리", desc: "견적 · 수주 · 매출 · ES연동", url: "https://bhseong77.github.io/enjet-sales-dashboard/", status: "beta" },
+  { id: "purchase", icon: "🛒", name: "구매관리", desc: "PR · 견적 · 발주 · 입고 · BOM", url: "https://bhseong77.github.io/enjet-purchase-dashboard/", status: "beta" },
+  { id: "es", icon: "🔧", name: "ES사업부", desc: "SE · PE · AE · 제조 · SAT/FAT", url: "https://bhseong77.github.io/enjet-es-dashboard/", status: "beta", featured: true },
+  { id: "approval", icon: "📋", name: "전자결재", desc: "휴가 · 지출 · 구매 · 출장", url: "https://bhseong77.github.io/enjet-approval/", status: "beta", hasStats: true },
+  { id: "hr", icon: "👥", name: "인사·급여 ERP", desc: "인사 · 급여 · 4대보험 · 연말정산", url: "https://bhseong77.github.io/hr-dashboard/", status: "beta" },
+  { id: "mail", icon: "📧", name: "메일관리", desc: "다우오피스 백업 · 외부 협업", url: "https://bhseong77.github.io/mail/", status: "backup" },
+  { id: "finance", icon: "💰", name: "재무회계", desc: "매출 · 비용 · 손익 · 결산", url: null, status: "soon" }
 ];
 
 let msalInstance = null;
@@ -573,7 +600,13 @@ function renderModules() {
   grid.innerHTML = "";
   MODULES.forEach(mod => {
     const canAccess = canAccessModule(mod.id);
-    const isReady = mod.status === "active";
+    const isReady = mod.status === "beta" || mod.status === "backup" || mod.status === "active";
+    // 배지 라벨 결정
+    let badgeLabel = "🧪 베타테스트";
+    let badgeClass = "beta";
+    if (mod.status === "beta") { badgeLabel = "🧪 베타테스트"; badgeClass = "beta"; }
+    else if (mod.status === "backup") { badgeLabel = "💾 백업중"; badgeClass = "backup"; }
+    
     const card = document.createElement("div");
     if (!isReady) {
       card.className = "module-card disabled";
@@ -604,6 +637,26 @@ function renderModules() {
             <div class="mc-no-access-text" style="margin-top:4px;font-size:11px">관리자에게 문의하세요</div>
           </div>
         </div>`;
+    } else if (mod.id === "es") {
+      // ⭐ ES사업부 - 특별 카드 (전체 워크플로우 통합 표시)
+      card.className = "module-card featured-card";
+      card.id = `card-${mod.id}`;
+      card.onclick = () => location.href = mod.url;
+      card.innerHTML = `
+        <div class="mc-head">
+          <div class="mc-icon">${mod.icon}</div>
+          <div class="mc-title"><h3>${mod.name} <span style="font-size:10px;background:#f59e0b;color:#fff;padding:2px 6px;border-radius:4px;margin-left:4px;font-weight:700">⭐ 통합 워크플로</span></h3><p>${mod.desc}</p></div>
+          <div class="mc-badge ${badgeClass}">${badgeLabel}</div>
+        </div>
+        <div class="mc-body">
+          <div class="mc-stats">
+            <div class="mc-stat"><div class="mc-stat-label">📺 채널</div><div class="mc-stat-val" id="esStatChannels"><span class="loader"></span></div></div>
+            <div class="mc-stat"><div class="mc-stat-label">📁 프로젝트</div><div class="mc-stat-val" id="esStatProjects"><span class="loader"></span></div></div>
+            <div class="mc-stat"><div class="mc-stat-label">💰 견적</div><div class="mc-stat-val" id="esStatQuotes"><span class="loader"></span></div></div>
+            <div class="mc-stat"><div class="mc-stat-label">⚖️ 결재중</div><div class="mc-stat-val" id="esStatApprovals"><span class="loader"></span></div></div>
+          </div>
+          <div class="mc-foot"><span class="mc-last" id="esLast">데이터 로딩 중...</span><span class="mc-arrow">→</span></div>
+        </div>`;
     } else if (mod.hasStats) {
       card.className = "module-card";
       card.id = `card-${mod.id}`;
@@ -612,7 +665,7 @@ function renderModules() {
         <div class="mc-head">
           <div class="mc-icon">${mod.icon}</div>
           <div class="mc-title"><h3>${mod.name}</h3><p>${mod.desc}</p></div>
-          <div class="mc-badge" id="${mod.id}Badge">로딩...</div>
+          <div class="mc-badge ${badgeClass}" id="${mod.id}Badge">${badgeLabel}</div>
         </div>
         <div class="mc-body">
           <div class="mc-stats">
@@ -626,19 +679,29 @@ function renderModules() {
     } else {
       card.className = "module-card";
       card.onclick = () => location.href = mod.url;
+      const subText = mod.status === "backup" 
+        ? "📥 다우오피스 백업 운영 중" 
+        : mod.status === "beta" 
+          ? "🧪 베타테스트 진행 중"
+          : `${mod.desc} 관련 업무`;
       card.innerHTML = `
         <div class="mc-head">
           <div class="mc-icon">${mod.icon}</div>
           <div class="mc-title"><h3>${mod.name}</h3><p>${mod.desc}</p></div>
-          <div class="mc-badge">운영중</div>
+          <div class="mc-badge ${badgeClass}">${badgeLabel}</div>
         </div>
         <div class="mc-body">
-          <div class="mc-desc">${mod.desc} 관련 업무</div>
+          <div class="mc-desc">${subText}</div>
           <div class="mc-foot"><span class="mc-last">접속 가능</span><span class="mc-arrow">→</span></div>
         </div>`;
     }
     grid.appendChild(card);
   });
+  
+  // 통계 로드
+  loadApprovalStats();
+  loadESStats();  // ⭐ ES 통계 로드
+  loadWorkflowStatus();  // 🔄 전체 워크플로우 상태
 }
 
 function requestAccess(mod) {
@@ -665,7 +728,7 @@ function openAdminPanel() {
 
 function renderPermsList() {
   const container = $("permsList");
-  const activeModules = MODULES.filter(m => m.status === "active");
+  const activeModules = MODULES.filter(m => m.status === "beta" || m.status === "backup" || m.status === "active");
   container.innerHTML = activeModules.map(mod => {
     if (!editingPerms[mod.id]) editingPerms[mod.id] = { enabled: false, allCompany: false, departments: [], ranks: [], individuals: [], blocked: [] };
     const perm = editingPerms[mod.id];
@@ -919,14 +982,211 @@ async function loadApprovalStats() {
         $("approvalBadge").className = "mc-badge alert";
         $("approvalBadge").textContent = `${pendingCount}건 대기`;
       } else {
-        $("approvalBadge").className = "mc-badge";
-        $("approvalBadge").textContent = "운영중";
+        $("approvalBadge").className = "mc-badge beta";
+        $("approvalBadge").textContent = "🧪 베타테스트";
       }
       $("approvalLast").textContent = lastActivity ? `최근 활동: ${formatRelTime(lastActivity)}` : "활동 없음";
     }
   } catch (e) {
     console.warn("결재 통계 로드 실패:", e);
   }
+}
+
+// ⭐ ES사업부 통계 로드
+const ES_BASE_PATH = "🔧 ES사업부/99.Dashboard(real-time)";
+async function loadESStats() {
+  if (!canAccessModule("es")) return;
+  try {
+    const token = await getToken();
+    
+    // 채널 매핑, 프로젝트, 견적 동시 로드
+    const [chMap, projects, quotes, approvalMaster] = await Promise.allSettled([
+      loadESJson(token, "es-channel-map.json"),
+      loadESJson(token, "es-projects.json"),
+      loadESJson(token, "es-quotes.json"),
+      loadESJson(token, "../../📋 전자결재/99.Dashboard(real-time)/approval-master.json")
+    ]);
+    
+    // 채널 수
+    let channelCount = 0;
+    if (chMap.status === "fulfilled" && chMap.value) {
+      const map = chMap.value.map || chMap.value.mappings || {};
+      channelCount = Object.values(map).filter(c => c.status === "active").length;
+    }
+    
+    // 프로젝트 수
+    let projectCount = 0;
+    if (projects.status === "fulfilled" && projects.value) {
+      const list = projects.value.projects || projects.value.items || [];
+      projectCount = list.filter(p => p.status !== "취소" && p.status !== "완료" && p.status !== "납품완료").length;
+    }
+    
+    // 견적 수 (이번달)
+    let quoteCount = 0;
+    if (quotes.status === "fulfilled" && quotes.value) {
+      const list = quotes.value.quotes || quotes.value.items || [];
+      const thisMonth = new Date().toISOString().substring(0,7);
+      quoteCount = list.filter(q => (q.createdAt || "").startsWith(thisMonth)).length;
+    }
+    
+    // 결재 진행중 (ES 모듈에서 상신한 것)
+    let approvalCount = 0;
+    if (approvalMaster.status === "fulfilled" && approvalMaster.value) {
+      const list = approvalMaster.value.approvals || [];
+      approvalCount = list.filter(a => a.source === "es_module" && a.status === "진행중").length;
+    }
+    
+    // UI 업데이트
+    if ($("esStatChannels")) {
+      $("esStatChannels").textContent = channelCount;
+      $("esStatProjects").textContent = projectCount;
+      $("esStatQuotes").textContent = quoteCount;
+      $("esStatApprovals").textContent = approvalCount;
+      
+      // 활동 메시지
+      let lastMsg = "정상 동기화 중";
+      if (channelCount === 0) lastMsg = "아직 채널 미생성";
+      else if (approvalCount > 0) lastMsg = `⚖️ ${approvalCount}건 결재 진행중`;
+      else if (projectCount > 0) lastMsg = `🏗️ ${projectCount}개 프로젝트 진행`;
+      
+      $("esLast").textContent = lastMsg;
+    }
+  } catch (e) {
+    console.warn("ES 통계 로드 실패:", e);
+    // 에러 시 - 표시
+    ["esStatChannels", "esStatProjects", "esStatQuotes", "esStatApprovals"].forEach(id => {
+      const el = $(id);
+      if (el) el.textContent = "-";
+    });
+    if ($("esLast")) $("esLast").textContent = "통계 로딩 실패";
+  }
+}
+
+async function loadESJson(token, filename) {
+  const fullPath = filename.startsWith("../") ? 
+    filename.replace("../../", "") :  // 상대 경로 처리
+    `${ES_BASE_PATH}/${filename}`;
+  
+  const path = encodeURIComponent(fullPath);
+  const r = await fetch(`https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${path}:/content`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!r.ok) {
+    if (r.status === 404) return null;
+    throw new Error(`${filename} (${r.status})`);
+  }
+  return await r.json();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔄 전체 워크플로우 통합 상태
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+async function loadWorkflowStatus() {
+  const grid = $("workflowGrid");
+  if (!grid) return;
+  
+  try {
+    const token = await getToken();
+    
+    // 영업/구매/ES 데이터 병렬 로드
+    const [salesAct, esReqs, prMaster, approvalM, channelMap, esQuotes, acceptances] = await Promise.allSettled([
+      fetchSPJson(token, "📦영업/99.Dashboard(real-time)/sales-activities.json"),
+      fetchSPJson(token, "🔧 ES사업부/99.Dashboard(real-time)/es-quote-requests.json"),
+      fetchSPJson(token, "🏭 구매/99.Dashboard(real-time)/pr-master.json"),
+      fetchSPJson(token, "📋 전자결재/99.Dashboard(real-time)/approval-master.json"),
+      fetchSPJson(token, "🔧 ES사업부/99.Dashboard(real-time)/es-channel-map.json"),
+      fetchSPJson(token, "🔧 ES사업부/99.Dashboard(real-time)/es-quotes.json"),
+      fetchSPJson(token, "🔧 ES사업부/99.Dashboard(real-time)/es-acceptance.json")
+    ]);
+    
+    // 영업 활성 프로젝트
+    let activeSales = 0;
+    if (salesAct.status === "fulfilled" && salesAct.value) {
+      const list = Array.isArray(salesAct.value) ? salesAct.value : (salesAct.value.activities || []);
+      activeSales = list.filter(a => a.projectCode && !["중단","취소","완료","납품완료","세금계산서완료"].includes(a.status)).length;
+    }
+    
+    // ES 견적 요청 대기
+    let pendingESReq = 0;
+    if (esReqs.status === "fulfilled" && esReqs.value) {
+      pendingESReq = (esReqs.value.requests || []).filter(r => r.status === "pending").length;
+    }
+    
+    // 전자결재 진행중 (ES 모듈에서 상신)
+    let approvalInProgress = 0;
+    let approvalCompleted = 0;
+    if (approvalM.status === "fulfilled" && approvalM.value) {
+      const list = approvalM.value.approvals || [];
+      approvalInProgress = list.filter(a => a.source === "es_module" && a.status === "진행중").length;
+      approvalCompleted = list.filter(a => a.source === "es_module" && (a.status === "완료" || a.status === "결재완료")).length;
+    }
+    
+    // 구매 자동 등록 (ES 결재)
+    let autoRegisteredPR = 0;
+    if (prMaster.status === "fulfilled" && prMaster.value) {
+      const list = Array.isArray(prMaster.value) ? prMaster.value : (prMaster.value.items || []);
+      autoRegisteredPR = list.filter(p => p.source === "es_module_auto").length;
+    }
+    
+    // Teams 채널
+    let activeChannels = 0;
+    if (channelMap.status === "fulfilled" && channelMap.value) {
+      const map = channelMap.value.map || {};
+      activeChannels = Object.values(map).filter(c => c.status === "active").length;
+    }
+    
+    // ES 견적 작성중
+    let esQuoteDraft = 0;
+    if (esQuotes.status === "fulfilled" && esQuotes.value) {
+      const list = esQuotes.value.quotes || esQuotes.value.items || [];
+      esQuoteDraft = list.filter(q => ["draft","bom_request","bom_received","labor_added"].includes(q.status)).length;
+    }
+    
+    // SAT/FAT 대기
+    let satFatPending = 0;
+    if (acceptances.status === "fulfilled" && acceptances.value) {
+      const list = acceptances.value.acceptances || acceptances.value.items || [];
+      satFatPending = list.filter(a => a.result === "진행중").length;
+    }
+    
+    // 렌더링
+    const stages = [
+      { icon: "💼", label: "영업 진행", value: activeSales, sub: "활성 프로젝트", color: "#1a6fd4" },
+      { icon: "📥", label: "ES 견적 요청", value: pendingESReq, sub: "대기중", color: "#7c3aed", alert: pendingESReq > 0 },
+      { icon: "💰", label: "ES 견적 작성", value: esQuoteDraft, sub: "진행중", color: "#1a6fd4" },
+      { icon: "⚖️", label: "전자결재", value: approvalInProgress, sub: `완료 ${approvalCompleted}건`, color: "#f59e0b", alert: approvalInProgress > 0 },
+      { icon: "🏭", label: "구매 자동등록", value: autoRegisteredPR, sub: "누적", color: "#0f766e" },
+      { icon: "📺", label: "Teams 채널", value: activeChannels, sub: "활성", color: "#7c3aed" },
+      { icon: "✅", label: "SAT/FAT", value: satFatPending, sub: "검수 대기", color: "#10b981" }
+    ];
+    
+    grid.innerHTML = stages.map(s => `
+      <div style="background:#fff;padding:14px;border-radius:10px;border:1px solid var(--border);${s.alert ? `box-shadow:0 0 0 2px ${s.color}40;` : ''}position:relative">
+        ${s.alert ? `<div style="position:absolute;top:8px;right:8px;width:8px;height:8px;background:#dc2626;border-radius:50%;animation:pulse 2s infinite"></div>` : ''}
+        <div style="font-size:24px;margin-bottom:4px">${s.icon}</div>
+        <div style="font-size:11px;color:var(--t3);font-weight:600">${s.label}</div>
+        <div style="font-size:26px;font-weight:900;color:${s.color};margin-top:2px">${s.value}<span style="font-size:13px;color:var(--t3);font-weight:500;margin-left:2px">건</span></div>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px">${s.sub}</div>
+      </div>
+    `).join("");
+    
+  } catch (e) {
+    console.warn("워크플로우 상태 로드 실패:", e);
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--t3);font-size:12px">⚠️ 워크플로우 상태를 불러올 수 없습니다 (${e.message})</div>`;
+  }
+}
+
+async function fetchSPJson(token, path) {
+  const encoded = encodeURIComponent(path);
+  const r = await fetch(`https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${encoded}:/content`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!r.ok) {
+    if (r.status === 404) return null;
+    throw new Error(`${path.split("/").pop()} (${r.status})`);
+  }
+  return await r.json();
 }
 
 function formatRelTime(iso) {
