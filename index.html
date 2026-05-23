@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
 <script>
-// MSAL 라이브러리 다중 CDN 폴백 로드
 (function loadMSAL() {
   const cdns = [
     "https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js",
@@ -19,16 +18,13 @@
     if (i >= cdns.length) {
       document.addEventListener("DOMContentLoaded", () => {
         const el = document.getElementById("errorMsg");
-        if (el) {
-          el.textContent = "MSAL 라이브러리 로드 실패. 네트워크 또는 CDN 차단 확인 필요.";
-          el.style.display = "block";
-        }
+        if (el) { el.textContent = "MSAL 라이브러리 로드 실패"; el.style.display = "block"; }
       });
       return;
     }
     const s = document.createElement("script");
     s.src = cdns[i++];
-    s.onload = () => { console.log("MSAL 로드 성공:", s.src); if (window.__initMSALWhenReady) window.__initMSALWhenReady(); };
+    s.onload = () => { if (window.__initWhenReady) window.__initWhenReady(); };
     s.onerror = tryNext;
     document.head.appendChild(s);
   }
@@ -37,35 +33,21 @@
 </script>
 <style>
 :root {
-  --bg:#f4f6fa;
-  --bg2:#fff;
-  --bg3:#f8f9fc;
-  --p:#1a6fd4;
-  --pd:#e6f0fc;
-  --p2:#0f4c81;
-  --t1:#1a202c;
-  --t2:#4a5568;
-  --t3:#9ca3af;
-  --border:#e5e7eb;
-  --border2:#d1d5db;
-  --g:#10b981;
-  --gd:#d1fae5;
-  --r:#dc2626;
-  --rd:#fee2e2;
-  --y:#d97706;
-  --yd:#fef3c7;
-  --a:#7c3aed;
-  --ad:#ede9fe;
+  --bg:#f4f6fa; --bg2:#fff; --bg3:#f8f9fc;
+  --p:#1a6fd4; --pd:#e6f0fc; --p2:#0f4c81;
+  --t1:#1a202c; --t2:#4a5568; --t3:#9ca3af;
+  --border:#e5e7eb; --border2:#d1d5db;
+  --g:#10b981; --gd:#d1fae5;
+  --r:#dc2626; --rd:#fee2e2;
+  --y:#d97706; --yd:#fef3c7;
+  --a:#7c3aed; --ad:#ede9fe;
   --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
   --shadow2:0 4px 6px rgba(0,0,0,0.07),0 2px 4px rgba(0,0,0,0.06);
   --shadow3:0 10px 15px rgba(0,0,0,0.08),0 4px 6px rgba(0,0,0,0.05);
-  --m:'JetBrains Mono','Consolas',monospace;
 }
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html,body { margin:0; padding:0; font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif; background:var(--bg); color:var(--t1); line-height:1.5; }
 body { padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); min-height:100vh; }
-
-/* ━━ 헤더 ━━ */
 .hdr { background:linear-gradient(135deg,#1a6fd4 0%,#0f4c81 100%); color:#fff; padding:18px 18px 22px; box-shadow:var(--shadow2); position:relative; overflow:hidden; }
 .hdr::before { content:""; position:absolute; top:-50%; right:-20%; width:300px; height:300px; background:radial-gradient(circle,rgba(255,255,255,0.12) 0%,transparent 70%); }
 .hdr-inner { position:relative; max-width:1200px; margin:0 auto; }
@@ -78,108 +60,140 @@ body { padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); min-heigh
 .hdr-sub { font-size:13px; opacity:0.92; }
 .btn-logout { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:#fff; padding:6px 12px; border-radius:6px; font-size:12px; cursor:pointer; transition:all 0.2s; }
 .btn-logout:hover { background:rgba(255,255,255,0.25); }
-
-/* ━━ 메인 컨테이너 ━━ */
 .main { max-width:1200px; margin:0 auto; padding:18px; }
-
-/* ━━ 환영 메시지 ━━ */
 .welcome { background:#fff; border-radius:14px; padding:18px 20px; margin-bottom:18px; box-shadow:var(--shadow); display:flex; align-items:center; gap:14px; }
 .welcome-emoji { font-size:36px; }
 .welcome-text { flex:1; }
 .welcome-greet { font-size:18px; font-weight:700; color:var(--t1); }
 .welcome-sub { font-size:13px; color:var(--t2); margin-top:2px; }
 .welcome-time { font-size:12px; color:var(--t3); }
-
-/* ━━ 모듈 카드 그리드 ━━ */
 .section-title { font-size:14px; font-weight:700; color:var(--t2); margin:0 4px 10px; display:flex; align-items:center; gap:6px; text-transform:uppercase; letter-spacing:0.5px; }
 .section-title::before { content:""; width:4px; height:14px; background:var(--p); border-radius:2px; }
+.section-title.admin::before { background:var(--a); }
 .module-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; margin-bottom:24px; }
 .module-card { background:#fff; border-radius:14px; padding:18px; box-shadow:var(--shadow); transition:all 0.2s; cursor:pointer; position:relative; overflow:hidden; }
 .module-card:hover { box-shadow:var(--shadow3); transform:translateY(-2px); }
-.module-card.disabled { cursor:not-allowed; opacity:0.55; }
+.module-card.disabled { cursor:not-allowed; opacity:0.65; background:#f9fafb; }
 .module-card.disabled:hover { transform:none; box-shadow:var(--shadow); }
+.module-card.no-access { cursor:not-allowed; background:#fafbfc; border:1px dashed var(--border2); }
+.module-card.no-access:hover { transform:none; box-shadow:var(--shadow); }
 .module-card.has-alert { box-shadow:0 0 0 2px var(--r); }
-
+.module-card.admin-card { background:linear-gradient(135deg,#7c3aed 0%,#6d28d9 100%); color:#fff; }
+.module-card.admin-card:hover { box-shadow:0 12px 24px rgba(124,58,237,0.4); transform:translateY(-3px); }
 .mc-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
 .mc-icon { font-size:32px; line-height:1; }
+.admin-card .mc-icon { filter:drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
 .mc-title { flex:1; }
 .mc-title h3 { font-size:16px; font-weight:800; margin:0; color:var(--t1); }
+.admin-card .mc-title h3 { color:#fff; }
 .mc-title p { font-size:11px; color:var(--t3); margin:2px 0 0; }
+.admin-card .mc-title p { color:rgba(255,255,255,0.85); }
 .mc-badge { background:var(--gd); color:var(--g); padding:3px 8px; border-radius:99px; font-size:10px; font-weight:700; }
 .mc-badge.warn { background:var(--yd); color:var(--y); }
+.mc-badge.lock { background:#e5e7eb; color:var(--t3); }
 .mc-badge.alert { background:var(--rd); color:var(--r); animation:pulse 2s infinite; }
-@keyframes pulse {
-  0%,100% { opacity:1; }
-  50% { opacity:0.6; }
-}
-
+.mc-badge.admin { background:rgba(255,255,255,0.25); color:#fff; border:1px solid rgba(255,255,255,0.4); }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
 .mc-body { padding-top:6px; }
 .mc-stats { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
 .mc-stat { background:var(--bg3); padding:10px 12px; border-radius:8px; text-align:center; }
 .mc-stat-label { font-size:10px; color:var(--t3); margin-bottom:2px; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; }
 .mc-stat-val { font-size:20px; font-weight:800; color:var(--p); line-height:1.1; }
 .mc-stat.alert .mc-stat-val { color:var(--r); }
-.mc-stat.success .mc-stat-val { color:var(--g); }
-.mc-stat.warn .mc-stat-val { color:var(--y); }
-.mc-stat-loading { font-size:14px; color:var(--t3); }
-
 .mc-desc { font-size:12px; color:var(--t2); margin-bottom:10px; line-height:1.5; }
+.admin-card .mc-desc { color:rgba(255,255,255,0.95); }
 .mc-foot { display:flex; align-items:center; justify-content:space-between; padding-top:10px; border-top:1px solid var(--border); }
+.admin-card .mc-foot { border-top:1px solid rgba(255,255,255,0.2); }
 .mc-last { font-size:11px; color:var(--t3); }
+.admin-card .mc-last { color:rgba(255,255,255,0.85); }
 .mc-arrow { color:var(--p); font-weight:700; font-size:14px; }
-
-/* ━━ 로그인 화면 ━━ */
+.admin-card .mc-arrow { color:#fff; }
+.mc-no-access { text-align:center; padding:12px 0; }
+.mc-no-access-icon { font-size:24px; opacity:0.4; margin-bottom:6px; }
+.mc-no-access-text { font-size:12px; color:var(--t3); }
 .login { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 20px; background:linear-gradient(135deg,#1a6fd4 0%,#0f4c81 100%); position:relative; overflow:hidden; }
 .login::before { content:""; position:absolute; width:600px; height:600px; background:radial-gradient(circle,rgba(255,255,255,0.08) 0%,transparent 70%); top:-200px; right:-200px; }
-.login::after { content:""; position:absolute; width:400px; height:400px; background:radial-gradient(circle,rgba(255,255,255,0.05) 0%,transparent 70%); bottom:-150px; left:-150px; }
 .login-box { background:#fff; border-radius:18px; padding:36px 28px; box-shadow:0 20px 60px rgba(0,0,0,0.2); max-width:380px; width:100%; text-align:center; position:relative; z-index:1; }
 .login-logo { font-size:42px; margin-bottom:8px; }
 .login-title { font-size:24px; font-weight:800; color:var(--t1); margin-bottom:4px; letter-spacing:-0.5px; }
 .login-sub { font-size:13px; color:var(--t2); margin-bottom:24px; }
 .btn-login { width:100%; padding:14px; background:linear-gradient(135deg,#1a6fd4 0%,#0f4c81 100%); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(26,111,212,0.4); transition:all 0.2s; }
-.btn-login:hover { box-shadow:0 6px 20px rgba(26,111,212,0.5); transform:translateY(-1px); }
-.btn-login:active { transform:translateY(0); }
-
-/* ━━ 토스트 ━━ */
-.toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:var(--t1); color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:var(--shadow3); z-index:1000; max-width:90vw; }
+.toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:var(--t1); color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:var(--shadow3); z-index:2000; max-width:90vw; }
 .toast.success { background:var(--g); }
 .toast.error { background:var(--r); }
 .toast.warn { background:var(--y); }
-
-/* ━━ 로딩 ━━ */
 .loader { display:inline-block; width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--p); border-radius:50%; animation:spin 0.8s linear infinite; vertical-align:middle; }
 @keyframes spin { to { transform:rotate(360deg); } }
-
-/* ━━ 반응형 ━━ */
+.modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:1000; padding:16px; }
+.modal-backdrop.on { display:flex; }
+.modal { background:#fff; border-radius:14px; max-width:720px; width:100%; max-height:90vh; display:flex; flex-direction:column; box-shadow:var(--shadow3); overflow:hidden; }
+.modal-head { padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#7c3aed 0%,#6d28d9 100%); color:#fff; }
+.modal-head h2 { margin:0; font-size:18px; font-weight:800; }
+.modal-close { background:rgba(255,255,255,0.2); border:none; color:#fff; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; }
+.modal-body { padding:20px 22px; overflow-y:auto; flex:1; }
+.modal-foot { padding:14px 22px; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:flex-end; background:var(--bg3); }
+.btn { padding:10px 18px; background:var(--p); color:#fff; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; transition:all 0.2s; }
+.btn:hover { background:var(--p2); }
+.btn.outline { background:#fff; color:var(--t1); border:1px solid var(--border); }
+.btn.outline:hover { background:var(--bg3); }
+.btn.success { background:var(--g); }
+.btn.danger { background:var(--r); }
+.btn.purple { background:var(--a); }
+.btn.sm { padding:6px 12px; font-size:12px; }
+.btn.xs { padding:4px 8px; font-size:11px; }
+.perm-card { background:#fff; border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:12px; }
+.perm-head { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.perm-icon { font-size:22px; }
+.perm-title { flex:1; font-size:14px; font-weight:700; }
+.perm-status { font-size:11px; padding:3px 8px; border-radius:99px; }
+.perm-status.open { background:var(--gd); color:var(--g); }
+.perm-status.closed { background:#e5e7eb; color:var(--t3); }
+.perm-row { display:flex; align-items:center; gap:8px; margin:8px 0; padding:8px 10px; background:var(--bg3); border-radius:8px; font-size:12px; }
+.perm-row-label { font-weight:600; color:var(--t2); width:60px; flex-shrink:0; }
+.perm-row-content { flex:1; color:var(--t1); }
+.perm-tag { display:inline-block; background:#fff; border:1px solid var(--border); padding:2px 8px; border-radius:99px; font-size:11px; margin:2px 4px 2px 0; }
+.perm-tag.dept { background:var(--pd); color:var(--p2); border-color:var(--pd); }
+.perm-tag.rank { background:var(--ad); color:var(--a); border-color:var(--ad); }
+.perm-tag.indiv { background:var(--gd); color:var(--g); border-color:var(--gd); }
+.perm-tag.block { background:var(--rd); color:var(--r); border-color:var(--rd); }
+.perm-tag .x { cursor:pointer; margin-left:4px; opacity:0.6; font-weight:bold; }
+.perm-tag .x:hover { opacity:1; }
+.perm-empty { color:var(--t3); font-size:11px; }
+.perm-toggle { display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; }
+.perm-toggle input { width:18px; height:18px; cursor:pointer; }
+.perm-toggle-label { font-size:12px; font-weight:600; }
+.perm-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.picker-search { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; margin-bottom:10px; }
+.picker-list { max-height:300px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; }
+.picker-item { padding:10px 12px; border-bottom:1px solid var(--border); cursor:pointer; display:flex; align-items:center; gap:10px; font-size:13px; }
+.picker-item:hover { background:var(--bg3); }
+.picker-item:last-child { border-bottom:none; }
+.picker-item input { cursor:pointer; }
+.picker-item-info { flex:1; }
+.picker-item-name { font-weight:600; }
+.picker-item-sub { font-size:11px; color:var(--t3); }
+.picker-empty { padding:30px 20px; text-align:center; color:var(--t3); font-size:13px; }
 @media (max-width:640px) {
   .hdr-title { font-size:20px; }
   .module-grid { grid-template-columns:1fr; }
-  .mc-stat-val { font-size:18px; }
+  .modal { max-height:95vh; }
 }
 </style>
 </head>
 <body>
 
-<!-- ━━ 로그인 화면 (기본 표시) ━━ -->
 <div id="loginScreen" class="login">
   <div class="login-box">
     <div class="login-logo">🏢</div>
     <div class="login-title">ENJET</div>
     <div class="login-sub">통합 업무 시스템</div>
-    <button class="btn-login" onclick="signIn()">
-      🔐 Microsoft 365로 로그인
-    </button>
-    <div style="margin-top:16px;font-size:11px;color:var(--t3)">
-      회사 이메일로 로그인하세요
-    </div>
+    <button class="btn-login" onclick="signIn()">🔐 Microsoft 365로 로그인</button>
+    <div style="margin-top:16px;font-size:11px;color:var(--t3)">회사 이메일로 로그인하세요</div>
     <div id="errorMsg" style="margin-top:14px;padding:10px;background:#fee;color:#c00;border-radius:8px;font-size:11px;display:none;text-align:left"></div>
   </div>
 </div>
 
-<!-- ━━ 메인 대시보드 ━━ -->
 <div id="mainScreen" style="display:none">
-  
-  <!-- 헤더 -->
   <div class="hdr">
     <div class="hdr-inner">
       <div class="hdr-top">
@@ -197,10 +211,7 @@ body { padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); min-heigh
     </div>
   </div>
 
-  <!-- 메인 -->
   <div class="main">
-    
-    <!-- 환영 메시지 -->
     <div class="welcome">
       <div class="welcome-emoji" id="welcomeEmoji">👋</div>
       <div class="welcome-text">
@@ -210,202 +221,160 @@ body { padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); min-heigh
       <div class="welcome-time" id="welcomeTime"></div>
     </div>
 
-    <!-- 모듈 카드 -->
+    <div id="adminSection" style="display:none">
+      <div class="section-title admin">관리자</div>
+      <div class="module-grid">
+        <div class="module-card admin-card" onclick="openAdminPanel()">
+          <div class="mc-head">
+            <div class="mc-icon">🛠️</div>
+            <div class="mc-title">
+              <h3>관리자 설정</h3>
+              <p>모듈 접근 권한 관리</p>
+            </div>
+            <div class="mc-badge admin">ADMIN</div>
+          </div>
+          <div class="mc-body">
+            <div class="mc-desc">사용자별 모듈 접근 권한을 부서/직급/개인 단위로 설정합니다.</div>
+            <div class="mc-foot">
+              <span class="mc-last" id="adminLastInfo">권한 설정 관리</span>
+              <span class="mc-arrow">→</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="section-title">업무 모듈</div>
-    <div class="module-grid">
+    <div class="module-grid" id="moduleGrid"></div>
+  </div>
+</div>
 
-      <!-- 영업 모듈 -->
-      <div class="module-card" onclick="openModule('sales')">
-        <div class="mc-head">
-          <div class="mc-icon">💼</div>
-          <div class="mc-title">
-            <h3>영업관리</h3>
-            <p>견적 · 수주 · 매출</p>
-          </div>
-          <div class="mc-badge">운영중</div>
-        </div>
-        <div class="mc-body">
-          <div class="mc-desc">견적부터 수주, 매출까지 영업 활동 전반</div>
-          <div class="mc-foot">
-            <span class="mc-last">접속 가능</span>
-            <span class="mc-arrow">→</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 구매 모듈 -->
-      <div class="module-card" onclick="openModule('purchase')">
-        <div class="mc-head">
-          <div class="mc-icon">🛒</div>
-          <div class="mc-title">
-            <h3>구매관리</h3>
-            <p>PR · PO · 입고</p>
-          </div>
-          <div class="mc-badge">운영중</div>
-        </div>
-        <div class="mc-body">
-          <div class="mc-desc">구매요청부터 발주, 입고까지 전 과정</div>
-          <div class="mc-foot">
-            <span class="mc-last">접속 가능</span>
-            <span class="mc-arrow">→</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 🆕 전자결재 모듈 -->
-      <div class="module-card" id="approvalCard" onclick="openModule('approval')">
-        <div class="mc-head">
-          <div class="mc-icon">📋</div>
-          <div class="mc-title">
-            <h3>전자결재</h3>
-            <p>휴가 · 지출 · 출장 · 결재</p>
-          </div>
-          <div class="mc-badge" id="approvalBadge">로딩...</div>
-        </div>
-        <div class="mc-body">
-          <div class="mc-stats">
-            <div class="mc-stat" id="statPendingBox">
-              <div class="mc-stat-label">받은 결재</div>
-              <div class="mc-stat-val" id="statPending"><span class="loader"></span></div>
-            </div>
-            <div class="mc-stat">
-              <div class="mc-stat-label">보낸 결재</div>
-              <div class="mc-stat-val" id="statSent"><span class="loader"></span></div>
-            </div>
-            <div class="mc-stat">
-              <div class="mc-stat-label">진행중</div>
-              <div class="mc-stat-val" id="statInProgress"><span class="loader"></span></div>
-            </div>
-            <div class="mc-stat">
-              <div class="mc-stat-label">참조</div>
-              <div class="mc-stat-val" id="statCc"><span class="loader"></span></div>
-            </div>
-          </div>
-          <div class="mc-foot">
-            <span class="mc-last" id="approvalLast">데이터 로딩 중...</span>
-            <span class="mc-arrow">→</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 메일 모듈 -->
-      <div class="module-card" onclick="openModule('mail')">
-        <div class="mc-head">
-          <div class="mc-icon">📧</div>
-          <div class="mc-title">
-            <h3>메일관리</h3>
-            <p>팀원 메일 · 캘린더</p>
-          </div>
-          <div class="mc-badge">운영중</div>
-        </div>
-        <div class="mc-body">
-          <div class="mc-desc">팀 메일함 통합 조회 및 캘린더 공유</div>
-          <div class="mc-foot">
-            <span class="mc-last">접속 가능</span>
-            <span class="mc-arrow">→</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 인사총무 (준비중) -->
-      <div class="module-card disabled" onclick="comingSoon('인사총무')">
-        <div class="mc-head">
-          <div class="mc-icon">👥</div>
-          <div class="mc-title">
-            <h3>인사·총무</h3>
-            <p>인사현황 · 복지</p>
-          </div>
-          <div class="mc-badge warn">준비중</div>
-        </div>
-        <div class="mc-body">
-          <div class="mc-desc">조직도, 휴가 현황, 복지 관리</div>
-          <div class="mc-foot">
-            <span class="mc-last">Phase 2 예정</span>
-            <span class="mc-arrow">→</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 재무회계 (준비중) -->
-      <div class="module-card disabled" onclick="comingSoon('재무회계')">
-        <div class="mc-head">
-          <div class="mc-icon">💰</div>
-          <div class="mc-title">
-            <h3>재무회계</h3>
-            <p>매출 · 비용 · 손익</p>
-          </div>
-          <div class="mc-badge warn">준비중</div>
-        </div>
-        <div class="mc-body">
-          <div class="mc-desc">월별 손익, 자금 운영, 결산</div>
-          <div class="mc-foot">
-            <span class="mc-last">Phase 2 예정</span>
-            <span class="mc-arrow">→</span>
-          </div>
-        </div>
-      </div>
-
+<!-- 관리자 모달 -->
+<div id="modalAdmin" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>🛠️ 모듈 접근 권한 관리</h2>
+      <button class="modal-close" onclick="closeModal('modalAdmin')">×</button>
     </div>
-
-    <!-- 경영진 영역 -->
-    <div class="section-title" id="ceoSection" style="display:none">CEO 대시보드</div>
-    <div class="module-grid" id="ceoGrid" style="display:none">
-      <div class="module-card disabled">
-        <div class="mc-head">
-          <div class="mc-icon">📊</div>
-          <div class="mc-title">
-            <h3>경영 KPI</h3>
-            <p>실시간 핵심 지표</p>
-          </div>
-          <div class="mc-badge warn">준비중</div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--t2);margin-bottom:14px;line-height:1.6">
+        💡 <strong>화이트리스트 방식</strong>: 권한 미설정 사용자는 접근할 수 없습니다.<br>
+        부서 / 직급 / 개인 / 전사 (OR 조건) - 하나라도 해당되면 접근 가능.
+      </div>
+      <div id="permsList"></div>
+      <div style="margin-top:20px;padding-top:18px;border-top:2px solid var(--border)">
+        <div style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:10px">👑 추가 관리자</div>
+        <div style="font-size:11px;color:var(--t3);margin-bottom:10px">슈퍼 관리자 외에 추가로 권한 설정이 가능한 사용자를 지정합니다.</div>
+        <div id="adminListContainer">
+          <span class="perm-tag indiv">👑 baekhoon@enjet.co.kr (슈퍼 관리자)</span>
+          <span id="extraAdminList"></span>
         </div>
-        <div class="mc-body">
-          <div class="mc-desc">매출/수주/원가 핵심 지표 실시간</div>
-          <div class="mc-foot">
-            <span class="mc-last">Phase 2 예정</span>
-            <span class="mc-arrow">→</span>
-          </div>
-        </div>
+        <div style="margin-top:8px"><button class="btn sm purple" onclick="openAdminPicker()">+ 관리자 추가</button></div>
       </div>
     </div>
+    <div class="modal-foot">
+      <button class="btn outline" onclick="closeModal('modalAdmin')">취소</button>
+      <button class="btn success" onclick="saveAccessControl()">💾 저장</button>
+    </div>
+  </div>
+</div>
 
+<!-- 부서 선택 -->
+<div id="modalDeptPicker" class="modal-backdrop">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head" style="background:linear-gradient(135deg,#1a6fd4,#0f4c81)">
+      <h2>🏢 부서 선택</h2>
+      <button class="modal-close" onclick="closeModal('modalDeptPicker')">×</button>
+    </div>
+    <div class="modal-body"><div id="deptList"></div></div>
+    <div class="modal-foot">
+      <button class="btn outline" onclick="closeModal('modalDeptPicker')">취소</button>
+      <button class="btn success" onclick="applyDeptPicker()">선택 적용</button>
+    </div>
+  </div>
+</div>
+
+<!-- 직급 선택 -->
+<div id="modalRankPicker" class="modal-backdrop">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">
+      <h2>💼 직급 선택</h2>
+      <button class="modal-close" onclick="closeModal('modalRankPicker')">×</button>
+    </div>
+    <div class="modal-body"><div id="rankList"></div></div>
+    <div class="modal-foot">
+      <button class="btn outline" onclick="closeModal('modalRankPicker')">취소</button>
+      <button class="btn purple" onclick="applyRankPicker()">선택 적용</button>
+    </div>
+  </div>
+</div>
+
+<!-- 직원 선택 -->
+<div id="modalUserPicker" class="modal-backdrop">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head" style="background:linear-gradient(135deg,#10b981,#059669)">
+      <h2 id="userPickerTitle">👤 직원 선택</h2>
+      <button class="modal-close" onclick="closeModal('modalUserPicker')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="text" class="picker-search" id="userPickerSearch" placeholder="이름/부서로 검색..." oninput="filterUserPicker()">
+      <div class="picker-list" id="userPickerList"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn outline" onclick="closeModal('modalUserPicker')">취소</button>
+      <button class="btn success" onclick="applyUserPicker()">선택 적용</button>
+    </div>
   </div>
 </div>
 
 <script>
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ENJET 메인 대시보드
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 const CLIENT_ID = "76793776-3330-496f-97f1-9f0c034f3f07";
 const TENANT_ID = "58b310e1-9278-47ab-8e49-792728818c9e";
 const SCOPES = ["User.Read","Files.ReadWrite.All","Sites.ReadWrite.All"];
 
 const SP_SITE = "enjetco.sharepoint.com:/sites/06.BackOffice";
+const ACCESS_CONTROL_PATH = "📋 전자결재/99.Dashboard(real-time)/access-control.json";
 const APPROVAL_MASTER_PATH = "📋 전자결재/99.Dashboard(real-time)/approval-master.json";
-const APPROVAL_DRAFTS_PATH = "📋 전자결재/99.Dashboard(real-time)/approval-drafts.json";
+const HR_FILE_PATH = "👥 인사·총무·복지/01.인사/[인사현황] 20260507_인사관리.xlsx";
 
-// 모듈 URL (운영중)
-const MODULE_URLS = {
-  sales: "https://bhseong77.github.io/enjet-sales-dashboard/",
-  purchase: "https://bhseong77.github.io/enjet-purchase-dashboard/",
-  approval: "https://bhseong77.github.io/enjet-approval/",
-  mail: "https://bhseong77.github.io/mail/"
-};
+const SUPER_ADMINS = ["baekhoon@enjet.co.kr"];
+const STANDARD_DEPTS = ["대표이사", "경영전략본부", "ES사업부", "기술연구소", "리사이클링부문", "구매감사팀", "미래성장전략팀"];
+const STANDARD_RANKS = ["대표", "부사장", "전무", "상무", "이사", "부장", "차장", "과장", "대리", "사원", "반장", "인턴"];
 
-// CEO 권한 (메모리에서 baekhoon이 기본 관리자)
-const CEO_EMAILS = ["bhsung@enjet.co.kr","baekhoon@enjet.co.kr"];
+const MODULES = [
+  { id: "sales", icon: "💼", name: "영업관리", desc: "견적 · 수주 · 매출", url: "https://bhseong77.github.io/enjet-sales-dashboard/", status: "active" },
+  { id: "purchase", icon: "🛒", name: "구매관리", desc: "PR · PO · 입고", url: "https://bhseong77.github.io/enjet-purchase-dashboard/", status: "active" },
+  { id: "approval", icon: "📋", name: "전자결재", desc: "휴가 · 지출 · 출장 · 결재", url: "https://bhseong77.github.io/enjet-approval/", status: "active", hasStats: true },
+  { id: "mail", icon: "📧", name: "메일관리", desc: "팀원 메일 · 캘린더", url: "https://bhseong77.github.io/mail/", status: "active" },
+  { id: "hr", icon: "👥", name: "인사·총무", desc: "조직도 · 휴가 · 복지", url: null, status: "soon" },
+  { id: "finance", icon: "💰", name: "재무회계", desc: "매출 · 비용 · 손익", url: null, status: "soon" }
+];
 
-// 글로벌 상태
 let msalInstance = null;
 let userAccount = null;
 let userEmail = "";
 let userName = "";
 let driveId = null;
+let isAdmin = false;
+let accessControl = null;
+let myProfile = null;
+let hrUsers = [];
+let editingPerms = null;
+let pickerContext = null;
 
 const $ = id => document.getElementById(id);
 
-// ━━ MSAL 초기화 ━━
+window.__initWhenReady = function() {
+  if (typeof msal === "undefined") { showError("MSAL 사용 불가"); return; }
+  initMSAL();
+};
+if (typeof msal !== "undefined") initMSAL();
+
+function showError(msg) {
+  const el = $("errorMsg");
+  if (el) { el.textContent = msg; el.style.display = "block"; }
+}
+
 async function initMSAL() {
   try {
     msalInstance = new msal.PublicClientApplication({
@@ -417,41 +386,24 @@ async function initMSAL() {
       cache: { cacheLocation: "sessionStorage" }
     });
     await msalInstance.initialize();
-    
-    // 리다이렉트 응답 처리
     try {
       const res = await msalInstance.handleRedirectPromise();
-      if (res) {
-        userAccount = res.account;
-      }
-    } catch (e) { console.warn("Redirect handle:", e); }
-    
-    // 기존 세션 확인
+      if (res) userAccount = res.account;
+    } catch (e) { console.warn(e); }
     const accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
       userAccount = accounts[0];
-      try {
-        await afterLogin();
-      } catch (e) {
-        console.error("afterLogin 실패:", e);
-        showError("로그인 후 처리 중 오류: " + e.message);
-        // afterLogin 실패해도 메인 화면은 보이게
+      try { await afterLogin(); }
+      catch (e) {
+        console.error(e);
+        showError("로그인 후 오류: " + e.message);
         $("loginScreen").style.display = "none";
         $("mainScreen").style.display = "block";
       }
     }
-    // 로그인 안 되어 있으면 그냥 로그인 화면 그대로 (이미 보이는 상태)
   } catch (e) {
-    console.error("MSAL 초기화 실패:", e);
+    console.error(e);
     showError("초기화 오류: " + e.message);
-  }
-}
-
-function showError(msg) {
-  const el = $("errorMsg");
-  if (el) {
-    el.textContent = msg;
-    el.style.display = "block";
   }
 }
 
@@ -461,7 +413,6 @@ async function signIn() {
     userAccount = res.account;
     afterLogin();
   } catch (e) {
-    // 팝업 차단 시 redirect로 폴백
     msalInstance.loginRedirect({ scopes: SCOPES });
   }
 }
@@ -481,67 +432,515 @@ async function getToken() {
   }
 }
 
-// ━━ 로그인 후 화면 ━━
 async function afterLogin() {
   $("loginScreen").style.display = "none";
   $("mainScreen").style.display = "block";
-  
   userEmail = (userAccount.username || "").toLowerCase();
   userName = userAccount.name || userEmail.split("@")[0];
-  
-  // 헤더 정보
-  const initial = userName.substring(0,1).toUpperCase();
-  $("userInitial").textContent = initial;
+  $("userInitial").textContent = userName.substring(0,1).toUpperCase();
   $("userInfo").textContent = `${userName} · ${userEmail}`;
-  
-  // 환영 메시지
   updateGreeting();
-  
-  // CEO 권한 체크
-  if (CEO_EMAILS.includes(userEmail)) {
-    $("ceoSection").style.display = "flex";
-    $("ceoGrid").style.display = "grid";
-  }
-  
-  // 결재 통계 로드 (백그라운드)
+  try { await initDrive(); } catch (e) { console.warn(e); }
+  await Promise.all([loadAccessControl(), loadHRData()]);
+  checkAdminStatus();
+  renderModules();
   loadApprovalStats();
 }
 
 function updateGreeting() {
   const h = new Date().getHours();
   let greet = "", emoji = "👋", sub = "";
+  const fn = userName.split(" ")[0];
   if (h < 6) { greet = "늦은 시각까지 수고하세요"; emoji = "🌙"; sub = "충분한 휴식도 잊지 마세요"; }
-  else if (h < 12) { greet = `좋은 아침입니다, ${userName.split(" ")[0]}님`; emoji = "☀️"; sub = "오늘도 좋은 하루 보내세요"; }
+  else if (h < 12) { greet = `좋은 아침입니다, ${fn}님`; emoji = "☀️"; sub = "오늘도 좋은 하루 보내세요"; }
   else if (h < 14) { greet = `점심 시간이에요`; emoji = "🍱"; sub = "맛있는 점심 되세요"; }
-  else if (h < 18) { greet = `${userName.split(" ")[0]}님, 안녕하세요`; emoji = "👋"; sub = "오늘 업무 잘 진행되고 계신가요?"; }
+  else if (h < 18) { greet = `${fn}님, 안녕하세요`; emoji = "👋"; sub = "오늘 업무 잘 진행되고 계신가요?"; }
   else if (h < 22) { greet = "수고 많으셨습니다"; emoji = "🌆"; sub = "이제 마무리할 시간입니다"; }
   else { greet = "늦은 시각입니다"; emoji = "🌙"; sub = "충분한 휴식 취하세요"; }
-  
   $("welcomeEmoji").textContent = emoji;
   $("welcomeGreet").textContent = greet;
   $("welcomeSub").textContent = sub;
-  
-  // 시간
   const now = new Date();
   const wd = ["일","월","화","수","목","금","토"][now.getDay()];
   $("welcomeTime").textContent = `${now.getMonth()+1}/${now.getDate()} (${wd}) ${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
 }
 
-// ━━ 모듈 열기 ━━
-function openModule(key) {
-  const url = MODULE_URLS[key];
-  if (url) {
-    window.location.href = url;
-  } else {
-    comingSoon(key);
+async function initDrive() {
+  if (driveId) return driveId;
+  const token = await getToken();
+  const siteRes = await fetch(`https://graph.microsoft.com/v1.0/sites/${SP_SITE}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!siteRes.ok) throw new Error(`Site ${siteRes.status}`);
+  const site = await siteRes.json();
+  const drivesRes = await fetch(`https://graph.microsoft.com/v1.0/sites/${site.id}/drives`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const drives = await drivesRes.json();
+  const drive = drives.value.find(d => d.name === "Documents" || d.name === "문서") || drives.value[0];
+  driveId = drive.id;
+  return driveId;
+}
+
+async function loadAccessControl() {
+  try {
+    const token = await getToken();
+    const path = encodeURIComponent(ACCESS_CONTROL_PATH);
+    const r = await fetch(`https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${path}:/content`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (r.ok) accessControl = await r.json();
+    else if (r.status === 404) accessControl = { admins: [], permissions: {}, lastUpdate: null };
+    else throw new Error(`Access control ${r.status}`);
+    if (!accessControl.permissions) accessControl.permissions = {};
+    if (!accessControl.admins) accessControl.admins = [];
+  } catch (e) {
+    console.warn("권한 로드 실패:", e);
+    accessControl = { admins: [], permissions: {} };
   }
 }
 
-function comingSoon(name) {
-  toast(`${name} 모듈은 준비중입니다`, "warn");
+async function loadHRData() {
+  try {
+    const token = await getToken();
+    const path = encodeURIComponent(HR_FILE_PATH);
+    const r = await fetch(`https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${path}:/content`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!r.ok) { console.warn("HR 파일 로드 실패:", r.status); return; }
+    const buf = await r.arrayBuffer();
+    await loadXLSXLib();
+    const wb = XLSX.read(buf, { type: "array" });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(sheet);
+    hrUsers = data.filter(r => r["이메일"] || r["email"]).map(r => ({
+      name: r["성명"] || r["이름"] || "",
+      email: ((r["이메일"] || r["email"] || "") + "").toLowerCase().trim(),
+      dept: r["부서"] || r["소속"] || "",
+      rank: r["직급"] || r["직위"] || ""
+    }));
+    myProfile = hrUsers.find(u => u.email === userEmail);
+  } catch (e) {
+    console.warn("HR 데이터 로드 실패:", e);
+  }
 }
 
-// ━━ 토스트 ━━
+async function loadXLSXLib() {
+  if (window.XLSX) return;
+  const cdns = [
+    "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js",
+    "https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"
+  ];
+  for (const url of cdns) {
+    try {
+      await new Promise((res, rej) => {
+        const s = document.createElement("script");
+        s.src = url; s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+      if (window.XLSX) return;
+    } catch {}
+  }
+  throw new Error("XLSX 라이브러리 로드 실패");
+}
+
+function checkAdminStatus() {
+  const superAdmin = SUPER_ADMINS.includes(userEmail);
+  const dynAdmin = (accessControl?.admins || []).map(e => e.toLowerCase()).includes(userEmail);
+  isAdmin = superAdmin || dynAdmin;
+  $("adminSection").style.display = isAdmin ? "block" : "none";
+  if (isAdmin && accessControl?.lastUpdate) {
+    $("adminLastInfo").textContent = `마지막 수정: ${formatRelTime(accessControl.lastUpdate)}`;
+  }
+}
+
+function canAccessModule(moduleId) {
+  if (isAdmin) return true;
+  const perm = accessControl?.permissions?.[moduleId];
+  if (!perm) return false;
+  if ((perm.blocked || []).map(e => e.toLowerCase()).includes(userEmail)) return false;
+  if (perm.enabled === false) return false;
+  if (perm.allCompany) return true;
+  if (myProfile && (perm.departments || []).includes(myProfile.dept)) return true;
+  if (myProfile && (perm.ranks || []).includes(myProfile.rank)) return true;
+  if ((perm.individuals || []).map(e => e.toLowerCase()).includes(userEmail)) return true;
+  return false;
+}
+
+function renderModules() {
+  const grid = $("moduleGrid");
+  grid.innerHTML = "";
+  MODULES.forEach(mod => {
+    const canAccess = canAccessModule(mod.id);
+    const isReady = mod.status === "active";
+    const card = document.createElement("div");
+    if (!isReady) {
+      card.className = "module-card disabled";
+      card.onclick = () => toast(`${mod.name} 모듈은 준비중입니다`, "warn");
+      card.innerHTML = `
+        <div class="mc-head">
+          <div class="mc-icon">${mod.icon}</div>
+          <div class="mc-title"><h3>${mod.name}</h3><p>${mod.desc}</p></div>
+          <div class="mc-badge warn">준비중</div>
+        </div>
+        <div class="mc-body">
+          <div class="mc-desc">Phase 2 예정</div>
+          <div class="mc-foot"><span class="mc-last">출시 예정</span><span class="mc-arrow">→</span></div>
+        </div>`;
+    } else if (!canAccess) {
+      card.className = "module-card no-access";
+      card.onclick = () => requestAccess(mod);
+      card.innerHTML = `
+        <div class="mc-head">
+          <div class="mc-icon" style="opacity:0.5">${mod.icon}</div>
+          <div class="mc-title"><h3 style="color:var(--t3)">${mod.name}</h3><p>${mod.desc}</p></div>
+          <div class="mc-badge lock">🔒 제한</div>
+        </div>
+        <div class="mc-body">
+          <div class="mc-no-access">
+            <div class="mc-no-access-icon">🔒</div>
+            <div class="mc-no-access-text">접근 권한이 없습니다</div>
+            <div class="mc-no-access-text" style="margin-top:4px;font-size:11px">관리자에게 문의하세요</div>
+          </div>
+        </div>`;
+    } else if (mod.hasStats) {
+      card.className = "module-card";
+      card.id = `card-${mod.id}`;
+      card.onclick = () => location.href = mod.url;
+      card.innerHTML = `
+        <div class="mc-head">
+          <div class="mc-icon">${mod.icon}</div>
+          <div class="mc-title"><h3>${mod.name}</h3><p>${mod.desc}</p></div>
+          <div class="mc-badge" id="${mod.id}Badge">로딩...</div>
+        </div>
+        <div class="mc-body">
+          <div class="mc-stats">
+            <div class="mc-stat" id="${mod.id}StatPendingBox"><div class="mc-stat-label">받은 결재</div><div class="mc-stat-val" id="${mod.id}StatPending"><span class="loader"></span></div></div>
+            <div class="mc-stat"><div class="mc-stat-label">보낸 결재</div><div class="mc-stat-val" id="${mod.id}StatSent"><span class="loader"></span></div></div>
+            <div class="mc-stat"><div class="mc-stat-label">진행중</div><div class="mc-stat-val" id="${mod.id}StatInProgress"><span class="loader"></span></div></div>
+            <div class="mc-stat"><div class="mc-stat-label">참조</div><div class="mc-stat-val" id="${mod.id}StatCc"><span class="loader"></span></div></div>
+          </div>
+          <div class="mc-foot"><span class="mc-last" id="${mod.id}Last">데이터 로딩 중...</span><span class="mc-arrow">→</span></div>
+        </div>`;
+    } else {
+      card.className = "module-card";
+      card.onclick = () => location.href = mod.url;
+      card.innerHTML = `
+        <div class="mc-head">
+          <div class="mc-icon">${mod.icon}</div>
+          <div class="mc-title"><h3>${mod.name}</h3><p>${mod.desc}</p></div>
+          <div class="mc-badge">운영중</div>
+        </div>
+        <div class="mc-body">
+          <div class="mc-desc">${mod.desc} 관련 업무</div>
+          <div class="mc-foot"><span class="mc-last">접속 가능</span><span class="mc-arrow">→</span></div>
+        </div>`;
+    }
+    grid.appendChild(card);
+  });
+}
+
+function requestAccess(mod) {
+  const adminEmails = [...SUPER_ADMINS, ...(accessControl?.admins || [])];
+  const adminText = adminEmails.join(", ");
+  const subject = encodeURIComponent(`[권한 요청] ${mod.name} 모듈 접근 권한`);
+  const body = encodeURIComponent(
+    `안녕하세요,\n\n${mod.name} 모듈에 대한 접근 권한을 요청드립니다.\n\n` +
+    `이름: ${userName}\n이메일: ${userEmail}\n부서: ${myProfile?.dept || "(미등록)"}\n직급: ${myProfile?.rank || "(미등록)"}\n\n` +
+    `용도:\n(작성)\n\n감사합니다.`
+  );
+  if (confirm(`${mod.name} 모듈 접근 권한이 없습니다.\n\n관리자에게 권한 요청 메일을 보내시겠습니까?\n관리자: ${adminText}`)) {
+    location.href = `mailto:${SUPER_ADMINS[0]}?subject=${subject}&body=${body}`;
+  }
+}
+
+function openAdminPanel() {
+  if (!isAdmin) return;
+  editingPerms = JSON.parse(JSON.stringify(accessControl.permissions || {}));
+  renderPermsList();
+  renderExtraAdmins();
+  $("modalAdmin").classList.add("on");
+}
+
+function renderPermsList() {
+  const container = $("permsList");
+  const activeModules = MODULES.filter(m => m.status === "active");
+  container.innerHTML = activeModules.map(mod => {
+    if (!editingPerms[mod.id]) editingPerms[mod.id] = { enabled: false, allCompany: false, departments: [], ranks: [], individuals: [], blocked: [] };
+    const perm = editingPerms[mod.id];
+    const isOpen = perm.enabled !== false && (perm.allCompany || (perm.departments?.length || perm.ranks?.length || perm.individuals?.length));
+    return `
+      <div class="perm-card">
+        <div class="perm-head">
+          <div class="perm-icon">${mod.icon}</div>
+          <div class="perm-title">${mod.name}</div>
+          <span class="perm-status ${isOpen ? 'open' : 'closed'}">${isOpen ? '접근 가능' : '제한됨'}</span>
+        </div>
+        <label class="perm-toggle" style="margin-bottom:8px">
+          <input type="checkbox" ${perm.enabled !== false ? 'checked' : ''} onchange="togglePermEnabled('${mod.id}', this.checked)">
+          <span class="perm-toggle-label">권한 활성화</span>
+        </label>
+        <label class="perm-toggle" style="margin-bottom:8px">
+          <input type="checkbox" ${perm.allCompany ? 'checked' : ''} onchange="togglePermAllCompany('${mod.id}', this.checked)">
+          <span class="perm-toggle-label">🌍 전사 접근 가능</span>
+        </label>
+        ${!perm.allCompany ? `
+          <div class="perm-row">
+            <div class="perm-row-label">🏢 부서</div>
+            <div class="perm-row-content">
+              ${(perm.departments || []).length > 0 
+                ? perm.departments.map(d => `<span class="perm-tag dept">${d}<span class="x" onclick="removePerm('${mod.id}','departments','${d}')">✕</span></span>`).join("")
+                : '<span class="perm-empty">-</span>'}
+            </div>
+          </div>
+          <div class="perm-row">
+            <div class="perm-row-label">💼 직급</div>
+            <div class="perm-row-content">
+              ${(perm.ranks || []).length > 0
+                ? perm.ranks.map(r => `<span class="perm-tag rank">${r}<span class="x" onclick="removePerm('${mod.id}','ranks','${r}')">✕</span></span>`).join("")
+                : '<span class="perm-empty">-</span>'}
+            </div>
+          </div>
+          <div class="perm-row">
+            <div class="perm-row-label">👤 개인</div>
+            <div class="perm-row-content">
+              ${(perm.individuals || []).length > 0
+                ? perm.individuals.map(e => {
+                    const u = hrUsers.find(h => h.email === e.toLowerCase());
+                    const label = u ? `${u.name} ${u.rank}` : e;
+                    return `<span class="perm-tag indiv">${label}<span class="x" onclick="removePerm('${mod.id}','individuals','${e}')">✕</span></span>`;
+                  }).join("")
+                : '<span class="perm-empty">-</span>'}
+            </div>
+          </div>
+        ` : ''}
+        <div class="perm-row">
+          <div class="perm-row-label">🚫 차단</div>
+          <div class="perm-row-content">
+            ${(perm.blocked || []).length > 0
+              ? perm.blocked.map(e => {
+                  const u = hrUsers.find(h => h.email === e.toLowerCase());
+                  const label = u ? `${u.name} ${u.rank}` : e;
+                  return `<span class="perm-tag block">${label}<span class="x" onclick="removePerm('${mod.id}','blocked','${e}')">✕</span></span>`;
+                }).join("")
+              : '<span class="perm-empty">-</span>'}
+          </div>
+        </div>
+        <div class="perm-actions">
+          ${!perm.allCompany ? `
+            <button class="btn xs outline" onclick="openDeptPicker('${mod.id}')">+ 부서</button>
+            <button class="btn xs outline" onclick="openRankPicker('${mod.id}')">+ 직급</button>
+            <button class="btn xs outline" onclick="openUserPicker('${mod.id}', 'individuals')">+ 개인</button>
+          ` : ''}
+          <button class="btn xs outline" style="border-color:var(--rd);color:var(--r)" onclick="openUserPicker('${mod.id}', 'blocked')">+ 차단</button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function renderExtraAdmins() {
+  const extraAdmins = (accessControl.admins || []).filter(e => !SUPER_ADMINS.includes(e.toLowerCase()));
+  const container = $("extraAdminList");
+  if (extraAdmins.length === 0) { container.innerHTML = ""; return; }
+  container.innerHTML = " " + extraAdmins.map(e => {
+    const u = hrUsers.find(h => h.email === e.toLowerCase());
+    const label = u ? `${u.name} ${u.rank}` : e;
+    return `<span class="perm-tag indiv">${label}<span class="x" onclick="removeExtraAdmin('${e}')">✕</span></span>`;
+  }).join(" ");
+}
+
+function togglePermEnabled(modId, val) { editingPerms[modId].enabled = val; renderPermsList(); }
+function togglePermAllCompany(modId, val) { editingPerms[modId].allCompany = val; renderPermsList(); }
+function removePerm(modId, key, value) {
+  editingPerms[modId][key] = (editingPerms[modId][key] || []).filter(v => v !== value);
+  renderPermsList();
+}
+function removeExtraAdmin(email) {
+  accessControl.admins = (accessControl.admins || []).filter(e => e.toLowerCase() !== email.toLowerCase());
+  renderExtraAdmins();
+}
+
+function openDeptPicker(modId) {
+  pickerContext = { modId, type: "departments" };
+  const cur = new Set(editingPerms[modId].departments || []);
+  $("deptList").innerHTML = STANDARD_DEPTS.map(d => `
+    <label class="picker-item">
+      <input type="checkbox" value="${d}" ${cur.has(d) ? 'checked' : ''}>
+      <div class="picker-item-info"><div class="picker-item-name">${d}</div></div>
+    </label>`).join("");
+  $("modalDeptPicker").classList.add("on");
+}
+function applyDeptPicker() {
+  const checked = Array.from($("deptList").querySelectorAll("input:checked")).map(c => c.value);
+  editingPerms[pickerContext.modId].departments = checked;
+  closeModal("modalDeptPicker");
+  renderPermsList();
+}
+
+function openRankPicker(modId) {
+  pickerContext = { modId, type: "ranks" };
+  const cur = new Set(editingPerms[modId].ranks || []);
+  $("rankList").innerHTML = STANDARD_RANKS.map(r => `
+    <label class="picker-item">
+      <input type="checkbox" value="${r}" ${cur.has(r) ? 'checked' : ''}>
+      <div class="picker-item-info"><div class="picker-item-name">${r}</div></div>
+    </label>`).join("");
+  $("modalRankPicker").classList.add("on");
+}
+function applyRankPicker() {
+  const checked = Array.from($("rankList").querySelectorAll("input:checked")).map(c => c.value);
+  editingPerms[pickerContext.modId].ranks = checked;
+  closeModal("modalRankPicker");
+  renderPermsList();
+}
+
+function openUserPicker(modId, type) {
+  pickerContext = { modId, type, isAdminPicker: false };
+  $("userPickerTitle").innerHTML = type === "blocked" ? "🚫 차단할 직원 선택" : "👤 직원 선택";
+  $("userPickerSearch").value = "";
+  renderUserPicker("");
+  $("modalUserPicker").classList.add("on");
+}
+function openAdminPicker() {
+  pickerContext = { isAdminPicker: true };
+  $("userPickerTitle").innerHTML = "👑 추가 관리자 선택";
+  $("userPickerSearch").value = "";
+  renderUserPicker("");
+  $("modalUserPicker").classList.add("on");
+}
+function renderUserPicker(search) {
+  let curSet;
+  if (pickerContext.isAdminPicker) {
+    curSet = new Set((accessControl.admins || []).map(e => e.toLowerCase()));
+  } else {
+    curSet = new Set((editingPerms[pickerContext.modId][pickerContext.type] || []).map(e => e.toLowerCase()));
+  }
+  const s = (search || "").trim().toLowerCase();
+  let list = hrUsers;
+  if (s) {
+    list = list.filter(u => 
+      u.name.toLowerCase().includes(s) || u.email.toLowerCase().includes(s) ||
+      u.dept.toLowerCase().includes(s) || u.rank.toLowerCase().includes(s)
+    );
+  }
+  if (list.length === 0) {
+    $("userPickerList").innerHTML = '<div class="picker-empty">결과가 없습니다</div>';
+    return;
+  }
+  $("userPickerList").innerHTML = list.slice(0, 100).map(u => `
+    <label class="picker-item">
+      <input type="checkbox" value="${u.email}" ${curSet.has(u.email) ? 'checked' : ''}>
+      <div class="picker-item-info">
+        <div class="picker-item-name">${u.name} ${u.rank}</div>
+        <div class="picker-item-sub">${u.dept} · ${u.email}</div>
+      </div>
+    </label>`).join("");
+}
+function filterUserPicker() { renderUserPicker($("userPickerSearch").value); }
+function applyUserPicker() {
+  const checked = Array.from($("userPickerList").querySelectorAll("input:checked")).map(c => c.value);
+  if (pickerContext.isAdminPicker) {
+    accessControl.admins = checked;
+    renderExtraAdmins();
+  } else {
+    editingPerms[pickerContext.modId][pickerContext.type] = checked;
+    renderPermsList();
+  }
+  closeModal("modalUserPicker");
+}
+
+async function saveAccessControl() {
+  try {
+    accessControl.permissions = editingPerms;
+    accessControl.lastUpdate = new Date().toISOString();
+    accessControl.lastUpdateBy = userEmail;
+    const token = await getToken();
+    const path = encodeURIComponent(ACCESS_CONTROL_PATH);
+    const content = JSON.stringify(accessControl, null, 2);
+    const r = await fetch(`https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${path}:/content`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: content
+    });
+    if (!r.ok) {
+      const err = await r.text();
+      throw new Error(`저장 실패 (${r.status}): ${err.substring(0,200)}`);
+    }
+    toast("✅ 권한 설정이 저장되었습니다", "success");
+    closeModal("modalAdmin");
+    await loadAccessControl();
+    checkAdminStatus();
+    renderModules();
+    loadApprovalStats();
+  } catch (e) {
+    toast("저장 실패: " + e.message, "error");
+  }
+}
+
+async function loadApprovalStats() {
+  if (!canAccessModule("approval")) return;
+  try {
+    const token = await getToken();
+    const path = encodeURIComponent(APPROVAL_MASTER_PATH);
+    const r = await fetch(`https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${path}:/content`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    let master = { approvals: [] };
+    if (r.ok) master = await r.json();
+    else if (r.status !== 404) throw new Error(`Master ${r.status}`);
+    const approvals = master.approvals || [];
+    const myEmail = userEmail.toLowerCase();
+    const pendingCount = approvals.filter(a => {
+      if (a.status !== "진행중") return false;
+      const curStep = a.approvalLine?.[a.currentStep];
+      return (curStep?.email || "").toLowerCase() === myEmail && curStep?.status === "대기";
+    }).length;
+    const sentCount = approvals.filter(a => (a.drafter?.email || "").toLowerCase() === myEmail).length;
+    const inProgressCount = approvals.filter(a => (a.drafter?.email || "").toLowerCase() === myEmail && a.status === "진행중").length;
+    const ccCount = approvals.filter(a => (a.ccList || []).some(cc => (cc.email || "").toLowerCase() === myEmail)).length;
+    const myActivities = approvals
+      .filter(a => 
+        (a.drafter?.email || "").toLowerCase() === myEmail ||
+        (a.approvalLine || []).some(s => (s.email || "").toLowerCase() === myEmail) ||
+        (a.ccList || []).some(cc => (cc.email || "").toLowerCase() === myEmail)
+      )
+      .map(a => a.updatedAt || a.createdAt).filter(Boolean).sort().reverse();
+    const lastActivity = myActivities[0];
+    if ($("approvalStatPending")) {
+      $("approvalStatPending").textContent = pendingCount;
+      $("approvalStatSent").textContent = sentCount;
+      $("approvalStatInProgress").textContent = inProgressCount;
+      $("approvalStatCc").textContent = ccCount;
+      if (pendingCount > 0) {
+        $("approvalStatPendingBox").classList.add("alert");
+        const card = $("card-approval");
+        if (card) card.classList.add("has-alert");
+        $("approvalBadge").className = "mc-badge alert";
+        $("approvalBadge").textContent = `${pendingCount}건 대기`;
+      } else {
+        $("approvalBadge").className = "mc-badge";
+        $("approvalBadge").textContent = "운영중";
+      }
+      $("approvalLast").textContent = lastActivity ? `최근 활동: ${formatRelTime(lastActivity)}` : "활동 없음";
+    }
+  } catch (e) {
+    console.warn("결재 통계 로드 실패:", e);
+  }
+}
+
+function formatRelTime(iso) {
+  try {
+    const d = new Date(iso);
+    const diff = Math.floor((new Date() - d) / 1000);
+    if (diff < 60) return "방금 전";
+    if (diff < 3600) return `${Math.floor(diff/60)}분 전`;
+    if (diff < 86400) return `${Math.floor(diff/3600)}시간 전`;
+    if (diff < 604800) return `${Math.floor(diff/86400)}일 전`;
+    return d.toLocaleDateString("ko-KR");
+  } catch { return ""; }
+}
+
 function toast(msg, type) {
   document.querySelectorAll(".toast").forEach(t => t.remove());
   const el = document.createElement("div");
@@ -551,171 +950,10 @@ function toast(msg, type) {
   setTimeout(() => el.remove(), 3000);
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 전자결재 통계 로드 (SharePoint에서 직접)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-async function loadApprovalStats() {
-  try {
-    const token = await getToken();
-    
-    // 사이트 ID
-    if (!driveId) {
-      const siteRes = await fetch(`https://graph.microsoft.com/v1.0/sites/${SP_SITE}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!siteRes.ok) throw new Error(`Site ${siteRes.status}`);
-      const site = await siteRes.json();
-      
-      const drivesRes = await fetch(`https://graph.microsoft.com/v1.0/sites/${site.id}/drives`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const drives = await drivesRes.json();
-      const drive = drives.value.find(d => d.name === "Documents" || d.name === "문서") || drives.value[0];
-      driveId = drive.id;
-    }
-    
-    // approval-master.json 읽기
-    const masterPath = encodeURIComponent(APPROVAL_MASTER_PATH);
-    const r = await fetch(`https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${masterPath}:/content`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    
-    let master = { approvals: [] };
-    if (r.ok) {
-      master = await r.json();
-    } else if (r.status === 404) {
-      // 파일 없음 - 빈 상태
-      master = { approvals: [] };
-    } else {
-      throw new Error(`Master ${r.status}`);
-    }
-    
-    const approvals = master.approvals || [];
-    
-    // 임시저장 (별도 시도, 실패해도 무시)
-    let draftCount = 0;
-    try {
-      const draftsPath = encodeURIComponent(APPROVAL_DRAFTS_PATH);
-      const dr = await fetch(`https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${draftsPath}:/content`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (dr.ok) {
-        const drafts = await dr.json();
-        draftCount = (drafts.drafts || []).filter(d => 
-          (d.drafter?.email || "").toLowerCase() === userEmail
-        ).length;
-      }
-    } catch (e) { /* 무시 */ }
-    
-    // 통계 계산
-    const myEmail = userEmail.toLowerCase();
-    
-    // 받은 결재 (내가 현재 결재해야 할 것)
-    const pendingCount = approvals.filter(a => {
-      if (a.status !== "진행중") return false;
-      const curStep = a.approvalLine?.[a.currentStep];
-      return (curStep?.email || "").toLowerCase() === myEmail && curStep?.status === "대기";
-    }).length;
-    
-    // 보낸 결재 (내가 상신한 전체)
-    const sentCount = approvals.filter(a => 
-      (a.drafter?.email || "").toLowerCase() === myEmail
-    ).length;
-    
-    // 진행중 (내가 상신한 것 중 진행중)
-    const inProgressCount = approvals.filter(a => 
-      (a.drafter?.email || "").toLowerCase() === myEmail && a.status === "진행중"
-    ).length;
-    
-    // 참조 (내가 참조자로 있는 것)
-    const ccCount = approvals.filter(a => 
-      (a.ccList || []).some(cc => (cc.email || "").toLowerCase() === myEmail)
-    ).length;
-    
-    // 마지막 활동 시간
-    const myActivities = approvals
-      .filter(a => 
-        (a.drafter?.email || "").toLowerCase() === myEmail ||
-        (a.approvalLine || []).some(s => (s.email || "").toLowerCase() === myEmail) ||
-        (a.ccList || []).some(cc => (cc.email || "").toLowerCase() === myEmail)
-      )
-      .map(a => a.updatedAt || a.createdAt)
-      .filter(Boolean)
-      .sort()
-      .reverse();
-    
-    const lastActivity = myActivities[0];
-    
-    // UI 업데이트
-    $("statPending").textContent = pendingCount;
-    $("statSent").textContent = sentCount;
-    $("statInProgress").textContent = inProgressCount;
-    $("statCc").textContent = ccCount;
-    
-    // 받은 결재 강조
-    if (pendingCount > 0) {
-      $("statPendingBox").classList.add("alert");
-      $("approvalCard").classList.add("has-alert");
-      $("approvalBadge").className = "mc-badge alert";
-      $("approvalBadge").textContent = `${pendingCount}건 대기`;
-    } else {
-      $("approvalBadge").className = "mc-badge";
-      $("approvalBadge").textContent = "운영중";
-    }
-    
-    // 마지막 활동
-    if (lastActivity) {
-      $("approvalLast").textContent = `최근 활동: ${formatRelTime(lastActivity)}`;
-    } else {
-      $("approvalLast").textContent = "활동 없음";
-    }
-    
-  } catch (e) {
-    console.warn("결재 통계 로드 실패:", e);
-    $("statPending").textContent = "?";
-    $("statSent").textContent = "?";
-    $("statInProgress").textContent = "?";
-    $("statCc").textContent = "?";
-    $("approvalBadge").className = "mc-badge warn";
-    $("approvalBadge").textContent = "오류";
-    $("approvalLast").textContent = "데이터를 불러올 수 없습니다";
-  }
-}
+function closeModal(id) { $(id).classList.remove("on"); }
 
-function formatRelTime(iso) {
-  try {
-    const d = new Date(iso);
-    const now = new Date();
-    const diff = Math.floor((now - d) / 1000);
-    if (diff < 60) return "방금 전";
-    if (diff < 3600) return `${Math.floor(diff/60)}분 전`;
-    if (diff < 86400) return `${Math.floor(diff/3600)}시간 전`;
-    if (diff < 604800) return `${Math.floor(diff/86400)}일 전`;
-    return d.toLocaleDateString("ko-KR");
-  } catch (e) { return ""; }
-}
-
-// 시작 - MSAL 라이브러리가 로드되면 자동으로 호출됨
-window.__initMSALWhenReady = function() {
-  if (typeof msal === "undefined") {
-    showError("MSAL 라이브러리를 사용할 수 없습니다");
-    return;
-  }
-  initMSAL();
-};
-
-// 만약 라이브러리가 이미 로드되어 있으면 바로 시작
-if (typeof msal !== "undefined") {
-  initMSAL();
-}
-
-// 1분마다 환영 메시지 갱신
 setInterval(updateGreeting, 60000);
-// 5분마다 결재 통계 갱신
-setInterval(() => {
-  if (userAccount) loadApprovalStats();
-}, 5 * 60 * 1000);
+setInterval(() => { if (userAccount) loadApprovalStats(); }, 5 * 60 * 1000);
 </script>
-
 </body>
 </html>
